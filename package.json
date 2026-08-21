@@ -1,0 +1,26 @@
+{
+  "name": "resume-fit-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check public/app.js",
+    "test": "node --test",
+    "security": "npm audit --omit=dev"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "docx": "^9.7.1",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "mammoth": "^1.11.0",
+    "multer": "^2.2.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "engines": {
+    "node": ">=22.3"
+  }
+}

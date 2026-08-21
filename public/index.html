@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="根据岗位 JD 分析简历匹配度，生成改写建议、求职信和可导出的 ATS 简历。" />
+    <meta name="theme-color" content="#176b87" />
+    <title>简历 JD 匹配优化器</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <button class="secondary compact-button sample-back-button" type="button" id="sampleBackBtn" hidden>← 返回</button>
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Resume Fit AI</p>
+            <h1>简历 JD 匹配优化器</h1>
+          </div>
+            <div class="topbar-actions">
+              <button class="secondary compact-button" type="button" id="historyBtn">历史记录</button>
+            </div>
+        </header>
+
+        <div class="grid">
+          <form class="panel input-panel" id="analyzeForm">
+            <div class="career-picker">
+              <div class="field-row">
+                <label for="roleCategory">职业领域</label>
+                <select id="roleCategory" name="roleCategory" disabled>
+                  <option value="">正在加载...</option>
+                </select>
+              </div>
+              <div class="field-row">
+                <label for="targetRole">具体方向</label>
+                <select id="targetRole" name="targetRole" disabled>
+                  <option value="">请先选择职业领域</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="employment-picker">
+              <div class="field-row">
+                <label for="candidateType">求职身份</label>
+                <select id="candidateType" name="candidateType">
+                  <option value="fresh">应届生</option>
+                  <option value="experienced">社招</option>
+                </select>
+              </div>
+              <div class="field-row">
+                <label for="experienceLevel">已工作年限</label>
+                <select id="experienceLevel" name="experienceLevel" disabled>
+                  <option value="0">0 年</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <label for="language">输出语言</label>
+              <select id="language" name="language">
+                <option value="zh">中文</option>
+                <option value="en">英文</option>
+              </select>
+            </div>
+
+            <label class="upload-zone" for="resumeFile" id="uploadZone">
+              <input id="resumeFile" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" />
+              <span class="upload-title">上传简历文件</span>
+              <span class="upload-meta" id="fileStatus">PDF、DOCX 或 TXT，最大 5MB</span>
+            </label>
+
+            <label class="text-field" for="resume">
+              <span class="field-heading"><span>简历内容</span><output id="resumeCount">0 / 6000</output></span>
+              <textarea id="resume" name="resume" maxlength="6000" placeholder="粘贴候选人的简历文本"></textarea>
+            </label>
+
+            <label class="text-field" for="jd">
+              <span class="field-heading"><span>岗位 JD</span><output id="jdCount">0 / 3000</output></span>
+              <textarea id="jd" name="jd" maxlength="3000" placeholder="粘贴目标岗位描述"></textarea>
+            </label>
+
+            <div class="actions">
+              <button class="secondary" type="button" id="sampleBtn" disabled>填入样例</button>
+              <a class="secondary button-link" href="/?sample=full" id="fullSampleLink">查看完整样例</a>
+              <button class="secondary" type="submit" data-mode="preview" disabled>免费快速诊断</button>
+              <button class="primary" type="submit" data-mode="full" disabled>完整生成</button>
+            </div>
+          </form>
+
+          <section class="panel result-panel">
+            <div class="progress-bar" id="analysisProgress" hidden><span></span></div>
+            <div class="score-wrap">
+              <div class="score-ring" id="scoreRing">
+                <span id="scoreValue">--</span>
+              </div>
+              <div>
+                <p class="section-label">匹配评分</p>
+                <h2 id="summary">等待生成报告</h2>
+                <div class="score-insights" id="scoreInsights"></div>
+              </div>
+            </div>
+
+            <div class="report-actions">
+              <span id="reportMeta">尚未生成</span>
+              <button class="secondary compact-button" type="button" id="copyReportBtn" disabled>复制报告</button>
+            </div>
+
+            <div class="preview-upgrade" id="previewUpgrade" hidden>
+              <span>快速诊断已完成。完整生成将按岗位重写简历，并补齐全部问题详解、项目方案、面试题、求职信和文件导出。</span>
+              <button class="primary compact-button" type="button" id="upgradeFullBtn">生成完整报告</button>
+            </div>
+
+            <div class="tabs" role="tablist">
+              <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="overview">总览</button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-tab="targeting">定向方案</button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-tab="rewrite">改写</button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-tab="letter">求职信</button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-tab="layout">简历排版</button>
+            </div>
+
+            <div class="tab-panel active" id="overview">
+              <div class="two-column">
+                <div>
+                  <h3>优势</h3>
+                  <ul id="strengths"></ul>
+                </div>
+                <div>
+                  <h3>缺口</h3>
+                  <ul id="gaps"></ul>
+                  <p class="premium-inline" id="gapsLocked">已列出全部主要问题；快速诊断详细分析其中 2 个。</p>
+                </div>
+              </div>
+              <section id="issueDetailsSection" hidden>
+                <h3>问题详解</h3>
+                <div class="issue-details" id="issueDetails"></div>
+              </section>
+              <h3>关键词</h3>
+              <div class="chips" id="keywords"></div>
+              <h3>行动清单</h3>
+              <ul id="actionPlan"></ul>
+            </div>
+
+            <div class="tab-panel" id="targeting">
+              <div class="tab-action-row">
+                <span>岗位定向改造</span>
+                <div class="export-format-group">
+                  <select id="exportFormat" aria-label="导出格式">
+                    <option value="docx" selected>Word (.docx)</option>
+                    <option value="txt">TXT (.txt)</option>
+                    <option value="md">Markdown (.md)</option>
+                  </select>
+                  <button class="secondary compact-button" type="button" id="exportTargetingBtn" disabled>导出建议</button>
+                </div>
+              </div>
+              <p class="strategy-summary" id="strategySummary"></p>
+              <h3>排版与栏目取舍</h3>
+              <div class="strategy-list" id="layoutChanges"></div>
+              <h3>项目取舍与改造</h3>
+              <div class="strategy-list" id="projectDecisions"></div>
+              <section id="newProjectSection" hidden>
+                <h3>建议新增项目</h3>
+                <div id="newProject"></div>
+              </section>
+              <h3>技能优先级</h3>
+              <div class="strategy-list" id="skillPriorities"></div>
+              <h3>面试重点</h3>
+              <div class="strategy-list" id="interviewFocus"></div>
+            </div>
+
+            <div class="tab-panel" id="rewrite">
+              <p class="premium-inline" id="rewritePreviewNotice">快速诊断展示 2 条代表性改写；完整报告提供 4-6 条不同经历或项目的改写。</p>
+              <div class="tab-action-row">
+                <span>逐条改写建议</span>
+                <button class="secondary compact-button" type="button" id="copyRewriteBtn" disabled>复制改写</button>
+              </div>
+              <div id="rewriteBullets" class="rewrite-list"></div>
+              <h3>ATS 建议</h3>
+              <ul id="atsTips"></ul>
+            </div>
+
+            <div class="tab-panel" id="letter">
+              <p class="premium-inline" id="letterPreviewNotice">快速诊断展示求职信开头，完整报告可查看并复制全文。</p>
+              <div class="tab-action-row">
+                <span>求职信草稿</span>
+                <button class="secondary compact-button" type="button" id="copyLetterBtn" disabled>复制求职信</button>
+              </div>
+              <div class="letter-box" id="coverLetter"></div>
+            </div>
+
+            <div class="tab-panel" id="layout">
+              <p class="premium-inline" id="layoutPreviewNotice">当前按原简历生成排版预览；完整报告会按岗位重写，并支持编辑和 PDF 导出。</p>
+              <div class="layout-toolbar" aria-label="简历排版设置">
+                <div class="toolbar-group">
+                  <span class="toolbar-label">模板</span>
+                  <div class="segmented" id="templatePicker">
+                    <button class="segment active" type="button" data-template="classic">经典</button>
+                    <button class="segment" type="button" data-template="modern">现代</button>
+                  </div>
+                </div>
+
+                <label class="toolbar-group" for="fontSize">
+                  <span class="toolbar-label">字号 <output id="fontSizeValue">14</output></span>
+                  <input id="fontSize" type="range" min="12" max="16" value="14" step="1" />
+                </label>
+
+                <label class="toolbar-group" for="lineHeight">
+                  <span class="toolbar-label">行距</span>
+                  <select id="lineHeight">
+                    <option value="1.45">紧凑</option>
+                    <option value="1.6" selected>标准</option>
+                    <option value="1.75">宽松</option>
+                  </select>
+                </label>
+
+                <div class="toolbar-group">
+                  <span class="toolbar-label">主题色</span>
+                  <div class="color-picker" id="colorPicker">
+                    <button class="color-swatch active" type="button" data-color="#176b87" style="--swatch: #176b87" aria-label="青蓝色"></button>
+                    <button class="color-swatch" type="button" data-color="#2f5f46" style="--swatch: #2f5f46" aria-label="墨绿色"></button>
+                    <button class="color-swatch" type="button" data-color="#8a3f32" style="--swatch: #8a3f32" aria-label="砖红色"></button>
+                    <button class="color-swatch" type="button" data-color="#333333" style="--swatch: #333333" aria-label="黑灰色"></button>
+                  </div>
+                </div>
+
+                <button class="primary export-button" type="button" id="printBtn">导出 PDF</button>
+              </div>
+
+              <div class="resume-stage">
+                <article class="resume-paper template-classic" id="resumePaper" contenteditable="true" spellcheck="false" title="点击可直接编辑简历内容">
+                  <div class="resume-empty">生成报告后，这里会出现可导出的简历。</div>
+                </article>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <footer class="privacy-note">
+          简历仅用于当前分析，服务器不保存文件；最近报告只保存在当前浏览器中。
+        </footer>
+      </section>
+    </main>
+
+    <dialog class="history-dialog" id="historyDialog">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">LOCAL HISTORY</p>
+          <h2>最近报告</h2>
+        </div>
+        <button class="secondary compact-button" type="button" id="closeHistoryBtn">关闭</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+      <button class="text-button" type="button" id="clearHistoryBtn">清除全部历史</button>
+    </dialog>
+
+    <div class="print-root" id="printRoot" aria-hidden="true"></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
