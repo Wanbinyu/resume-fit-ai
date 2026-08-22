@@ -4,6 +4,16 @@
 
 ## 本地运行
 
+Windows 用户可以直接双击项目根目录中的：
+
+```text
+启动简历优化器.cmd
+```
+
+启动器会检查 Node.js、在首次运行时安装依赖，并在服务就绪后自动打开浏览器。保持启动器窗口开启；按 `Ctrl+C` 或关闭窗口即可停止服务。
+
+也可以在终端手动运行：
+
 ```bash
 npm install
 npm start
@@ -38,6 +48,10 @@ http://localhost:3000
 - A4 实时预览，支持自然多页分页并通过浏览器导出 PDF
 - 报告复制和浏览器本地历史记录
 - 岗位定向建议支持导出为 Word DOCX、UTF-8 TXT 或 Markdown 文件
+- AI 分析使用内存任务队列，支持进度轮询、刷新恢复、取消、并发控制和临时故障自动重试
+- 原始简历与 JD 在任务结束后立即从任务内存清除，生成结果最多保留 15 分钟
+- 匿名运行统计记录成功率、耗时和 token 用量，管理接口使用独立令牌保护
+- 隐私政策、用户协议和分析前明确同意流程
 
 ## 配置 AI
 
@@ -54,6 +68,8 @@ AI_PROVIDER=deepseek
 DEEPSEEK_API_KEY=sk-xxx
 DEEPSEEK_MODEL=deepseek-chat
 ```
+
+任务与上线配置见 `.env.example` 和 [DEPLOY.md](./DEPLOY.md)。生产环境缺少 AI Key 时默认拒绝启动，避免误将演示模式公开上线。
 
 Qwen 示例：
 

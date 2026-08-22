@@ -1,5 +1,6 @@
 const HISTORY_KEY = "resume-fit-history-v1";
 const SAMPLE_RETURN_DRAFT_KEY = "resume-fit-ai-sample-return-draft-v1";
+const ACTIVE_TASK_KEY = "resume-fit-ai-active-task-v1";
 const MAX_HISTORY = 8;
 
 const form = document.querySelector("#analyzeForm");
@@ -19,6 +20,9 @@ const fileStatus = document.querySelector("#fileStatus");
 const resumeCount = document.querySelector("#resumeCount");
 const jdCount = document.querySelector("#jdCount");
 const analysisProgress = document.querySelector("#analysisProgress");
+const analysisStatus = document.querySelector("#analysisStatus");
+const analysisStatusText = document.querySelector("#analysisStatusText");
+const cancelAnalysisBtn = document.querySelector("#cancelAnalysisBtn");
 const reportMeta = document.querySelector("#reportMeta");
 const gapsLocked = document.querySelector("#gapsLocked");
 const previewUpgrade = document.querySelector("#previewUpgrade");
@@ -74,6 +78,7 @@ let currentMode = "";
 let currentReport = null;
 let currentDraft = null;
 let roleTaxonomy = [];
+let activeTask = null;
 
 document.querySelectorAll("button[data-mode]").forEach((button) => {
   button.addEventListener("click", () => {
@@ -203,44 +208,84 @@ uploadZone.addEventListener("drop", (event) => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  setLoading(true);
+  const requestedMode = activeMode;
+  const meta = {
+    roleCategory: fields.roleCategory.value,
+    targetRole: fields.targetRole.value,
+    candidateType: fields.candidateType.value,
+    experienceLevel: fields.experienceLevel.value,
+    language: fields.language.value,
+    mode: requestedMode,
+    createdAt: new Date().toISOString()
+  };
+  setLoading(true, 5, "正在创建分析任务...");
 
   try {
-    const response = await fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        resume: fields.resume.value,
-        jd: fields.jd.value,
-        roleCategory: fields.roleCategory.value,
-        targetRole: fields.targetRole.value,
-        candidateType: fields.candidateType.value,
-        experienceLevel: fields.experienceLevel.value,
-        language: fields.language.value,
-        mode: activeMode
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "请求失败");
-
-    const meta = {
+    const data = await createAnalysisTask({
+      resume: fields.resume.value,
+      jd: fields.jd.value,
       roleCategory: fields.roleCategory.value,
       targetRole: fields.targetRole.value,
       candidateType: fields.candidateType.value,
       experienceLevel: fields.experienceLevel.value,
       language: fields.language.value,
-      mode: activeMode,
-      createdAt: new Date().toISOString()
-    };
-    renderReport(data.report, meta);
-    saveHistory(data.report, meta);
-    showToast(activeMode === "preview" ? "快速诊断已生成。" : "完整报告已生成。", "success");
+      mode: requestedMode
+    });
+    activeTask = { id: data.id, token: data.token, meta };
+    sessionStorage.setItem(ACTIVE_TASK_KEY, JSON.stringify(activeTask));
+    const result = await pollAnalysisTask(activeTask);
+    completeAnalysis(result, meta);
   } catch (error) {
     summary.textContent = error.message || "生成失败，请检查输入后重试";
     showToast(error.message);
   } finally {
     setLoading(false);
+  }
+});
+
+async function createAnalysisTask(payload) {
+  const idempotencyKey = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Idempotency-Key": idempotencyKey
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(15_000)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "请求失败");
+      return data;
+    } catch (error) {
+      lastError = error;
+      const transient = error.name === "TimeoutError" || error.name === "TypeError";
+      if (!transient || attempt === 1) throw error;
+      updateAnalysisProgress(5, "网络暂时波动，正在确认任务是否已创建");
+      await delay(700);
+    }
+  }
+  throw lastError;
+}
+
+cancelAnalysisBtn.addEventListener("click", async () => {
+  if (!activeTask) return;
+  cancelAnalysisBtn.disabled = true;
+  analysisStatusText.textContent = "正在取消任务...";
+  try {
+    const response = await fetch(`/api/analyze/${encodeURIComponent(activeTask.id)}`, {
+      method: "DELETE",
+      headers: { "X-Task-Token": activeTask.token }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "取消失败");
+    analysisStatusText.textContent = data.message || "任务已取消";
+  } catch (error) {
+    cancelAnalysisBtn.disabled = false;
+    showToast(error.message || "取消失败，请稍后重试。");
   }
 });
 
@@ -468,20 +513,105 @@ function setCandidateProfile(candidateType, experienceLevel) {
   populateExperienceLevels(fields.candidateType.value, experienceLevel);
 }
 
-function setLoading(isLoading) {
+function setLoading(isLoading, progress = 0, message = "") {
   form.setAttribute("aria-busy", String(isLoading));
   form.querySelectorAll("button, select, textarea, input").forEach((control) => {
     control.disabled = isLoading;
   });
   analysisProgress.hidden = !isLoading;
+  analysisStatus.hidden = !isLoading;
   upgradeFullBtn.disabled = isLoading;
+  cancelAnalysisBtn.disabled = !isLoading;
   if (isLoading) {
-    summary.textContent = activeMode === "preview"
-      ? "正在快速诊断岗位匹配度..."
-      : "正在生成完整报告并重写简历...";
+    updateAnalysisProgress(progress, message || "正在创建分析任务...");
+    summary.textContent = activeMode === "preview" ? "正在快速诊断岗位匹配度..." : "正在生成完整报告并重写简历...";
     output.scoreInsights.innerHTML = "";
   }
   if (!isLoading) populateExperienceLevels(fields.candidateType.value, fields.experienceLevel.value);
+}
+
+function updateAnalysisProgress(progress, message) {
+  const normalizedProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+  analysisProgress.style.setProperty("--analysis-progress", `${normalizedProgress}%`);
+  analysisStatusText.textContent = `${message || "正在处理"} · ${normalizedProgress}%`;
+}
+
+async function pollAnalysisTask(task) {
+  let networkFailures = 0;
+  while (activeTask?.id === task.id) {
+    try {
+      const response = await fetch(`/api/analyze/${encodeURIComponent(task.id)}`, {
+        headers: { "X-Task-Token": task.token },
+        signal: AbortSignal.timeout(10_000)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        sessionStorage.removeItem(ACTIVE_TASK_KEY);
+        activeTask = null;
+        throw new Error(data.error || "任务状态查询失败");
+      }
+
+      networkFailures = 0;
+      updateAnalysisProgress(data.progress, data.message);
+      if (data.status === "succeeded") {
+        sessionStorage.removeItem(ACTIVE_TASK_KEY);
+        activeTask = null;
+        return data.result;
+      }
+      if (data.status === "failed" || data.status === "canceled") {
+        sessionStorage.removeItem(ACTIVE_TASK_KEY);
+        activeTask = null;
+        throw new Error(data.error || data.message || "任务未完成");
+      }
+      await delay(data.status === "queued" ? 1200 : 1800);
+    } catch (error) {
+      if (!activeTask || error.message === "任务已取消。") throw error;
+      if (error.name !== "TimeoutError" && error.name !== "TypeError") throw error;
+      networkFailures += 1;
+      analysisStatusText.textContent = networkFailures < 3
+        ? "网络暂时波动，正在继续查询任务..."
+        : "网络连接不稳定；任务仍在后台运行，请保持页面开启。";
+      await delay(Math.min(5000, 1000 * networkFailures));
+    }
+  }
+  throw new Error("任务已停止。");
+}
+
+function completeAnalysis(result, meta) {
+  if (!result?.report) throw new Error("任务没有返回有效报告，请重新生成。");
+  renderReport(result.report, meta);
+  saveHistory(result.report, meta);
+  showToast(meta.mode === "preview" ? "快速诊断已生成。" : "完整报告已生成。", "success");
+}
+
+async function resumeActiveAnalysis() {
+  if (isFullSamplePage()) return;
+  const raw = sessionStorage.getItem(ACTIVE_TASK_KEY);
+  if (!raw) return;
+
+  try {
+    const storedTask = JSON.parse(raw);
+    if (!storedTask?.id || !storedTask?.token || !storedTask?.meta) throw new Error("Invalid task state");
+    activeTask = storedTask;
+    activeMode = storedTask.meta.mode === "full" ? "full" : "preview";
+    selectRole(storedTask.meta.roleCategory, storedTask.meta.targetRole);
+    setCandidateProfile(storedTask.meta.candidateType, storedTask.meta.experienceLevel);
+    fields.language.value = storedTask.meta.language === "en" ? "en" : "zh";
+    setLoading(true, 5, "正在恢复未完成的任务...");
+    const result = await pollAnalysisTask(storedTask);
+    completeAnalysis(result, storedTask.meta);
+  } catch (error) {
+    sessionStorage.removeItem(ACTIVE_TASK_KEY);
+    activeTask = null;
+    summary.textContent = error.message || "未完成任务恢复失败";
+    showToast(error.message || "未完成任务恢复失败");
+  } finally {
+    setLoading(false);
+  }
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function activateTab(tabName) {
@@ -1112,4 +1242,4 @@ function escapeHtml(value) {
 
 updateCounts();
 setCandidateProfile("fresh", "0");
-loadRoleOptions();
+loadRoleOptions().then(resumeActiveAnalysis);

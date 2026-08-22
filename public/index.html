@@ -79,6 +79,11 @@
               <textarea id="jd" name="jd" maxlength="3000" placeholder="粘贴目标岗位描述"></textarea>
             </label>
 
+            <label class="consent-row" for="privacyConsent">
+              <input id="privacyConsent" type="checkbox" required />
+              <span>我已阅读并同意<a href="/privacy.html" target="_blank" rel="noopener">隐私政策</a>和<a href="/terms.html" target="_blank" rel="noopener">用户协议</a>，知悉简历与岗位信息会发送给所配置的 AI 服务商完成分析。</span>
+            </label>
+
             <div class="actions">
               <button class="secondary" type="button" id="sampleBtn" disabled>填入样例</button>
               <a class="secondary button-link" href="/?sample=full" id="fullSampleLink">查看完整样例</a>
@@ -89,6 +94,10 @@
 
           <section class="panel result-panel">
             <div class="progress-bar" id="analysisProgress" hidden><span></span></div>
+            <div class="analysis-status" id="analysisStatus" hidden>
+              <span id="analysisStatusText">正在创建任务...</span>
+              <button class="secondary compact-button" type="button" id="cancelAnalysisBtn">取消生成</button>
+            </div>
             <div class="score-wrap">
               <div class="score-ring" id="scoreRing">
                 <span id="scoreValue">--</span>
@@ -235,7 +244,8 @@
         </div>
 
         <footer class="privacy-note">
-          简历仅用于当前分析，服务器不保存文件；最近报告只保存在当前浏览器中。
+          <span>上传文件仅在内存中解析，分析任务会自动过期；最近报告只保存在当前浏览器。</span>
+          <span><a href="/privacy.html">隐私政策</a><a href="/terms.html">用户协议</a></span>
         </footer>
       </section>
     </main>

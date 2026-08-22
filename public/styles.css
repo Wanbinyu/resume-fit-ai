@@ -326,10 +326,10 @@ button:disabled {
 
 .progress-bar span {
   display: block;
-  width: 35%;
+  width: var(--analysis-progress, 5%);
   height: 100%;
   background: var(--accent);
-  animation: progress-slide 1.2s ease-in-out infinite;
+  transition: width 300ms ease;
 }
 
 @keyframes progress-slide {
@@ -339,6 +339,49 @@ button:disabled {
   to {
     transform: translateX(390%);
   }
+}
+
+.analysis-status {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  border-bottom: 1px solid var(--line);
+  padding: 2px 0 10px;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.analysis-status[hidden] {
+  display: none;
+}
+
+.consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.consent-row input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.consent-row a,
+.privacy-note a,
+.legal-shell a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .score-wrap {
@@ -972,10 +1015,69 @@ input[type="range"] {
 }
 
 .privacy-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   padding: 16px 4px 4px;
   color: var(--muted);
   text-align: center;
   font-size: 12px;
+}
+
+.privacy-note span:last-child {
+  display: inline-flex;
+  gap: 12px;
+}
+
+.legal-page {
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+.legal-shell {
+  width: min(820px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 72px;
+  color: var(--ink);
+}
+
+.legal-header {
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 22px;
+}
+
+.legal-header h1 {
+  margin: 8px 0;
+  font-size: 30px;
+}
+
+.legal-header p,
+.legal-section p,
+.legal-section li {
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.legal-section {
+  margin-top: 26px;
+}
+
+.legal-section h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+
+.legal-section ul {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.legal-back {
+  display: inline-flex;
+  margin-bottom: 22px;
 }
 
 .history-dialog {
