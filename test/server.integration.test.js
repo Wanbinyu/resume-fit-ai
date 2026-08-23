@@ -8,6 +8,8 @@ process.env.CUSTOM_API_KEY = "";
 process.env.CUSTOM_BASE_URL = "";
 process.env.CUSTOM_MODEL = "";
 process.env.ADMIN_STATS_TOKEN = "test-admin-token-that-is-long-enough";
+process.env.USAGE_HASH_SALT = "test-usage-hash-salt-that-is-long-enough";
+process.env.USAGE_STATS_FILE = "";
 process.env.SITE_OPERATOR_NAME = "Test Operator";
 process.env.SITE_CONTACT = "https://example.com/contact";
 
@@ -61,6 +63,17 @@ test("protects runtime statistics with the configured admin token", async () => 
   assert.ok(stats.requests.accepted >= 1);
   assert.ok(stats.requests.succeeded >= 1);
   assert.equal(typeof stats.queue.active, "number");
+  assert.equal(typeof stats.fullGeneration.totalClicks, "number");
+  assert.equal(typeof stats.fullGeneration.approximateUniqueBrowsers, "number");
+});
+
+test("serves the statistics dashboard only from the private path", async () => {
+  const current = await fetch(`${baseUrl}/121/admin.html`);
+  assert.equal(current.status, 200);
+  assert.match(await current.text(), /使用统计/);
+
+  const legacy = await fetch(`${baseUrl}/admin.html`);
+  assert.equal(legacy.status, 404);
 });
 
 test("returns the same task for a repeated idempotency key", async () => {
@@ -76,6 +89,34 @@ test("returns the same task for a repeated idempotency key", async () => {
   const secondTask = await second.json();
   assert.equal(firstTask.id, secondTask.id);
   assert.equal(firstTask.token, secondTask.token);
+});
+
+test("counts accepted full generations and deduplicates the same browser", async () => {
+  const before = await readAdminStats();
+  const visitorId = randomUUID();
+
+  for (let index = 0; index < 2; index += 1) {
+    const idempotencyKey = randomUUID();
+    const request = () => fetch(`${baseUrl}/api/analyze`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Idempotency-Key": idempotencyKey,
+        "X-Visitor-Id": visitorId
+      },
+      body: JSON.stringify({ ...validPayload(), mode: "full" })
+    });
+    const first = await request();
+    const repeated = await request();
+    assert.equal(first.status, 202);
+    assert.ok([200, 202].includes(repeated.status));
+    await waitForTask(await first.json());
+  }
+
+  const after = await readAdminStats();
+  assert.equal(after.fullGeneration.totalClicks, before.fullGeneration.totalClicks + 2);
+  assert.equal(after.fullGeneration.approximateUniqueBrowsers, before.fullGeneration.approximateUniqueBrowsers + 1);
+  assert.match(after.fullGeneration.lastGeneratedAt, /^\d{4}-\d{2}-\d{2}T/);
 });
 
 test("serves the privacy policy and terms", async () => {
@@ -117,6 +158,51 @@ test("exports targeting advice as a valid DOCX archive", async () => {
   assert.match(response.headers.get("content-type"), /wordprocessingml/);
   const bytes = new Uint8Array(await response.arrayBuffer());
   assert.equal(String.fromCharCode(bytes[0], bytes[1]), "PK");
+});
+
+test("exports an edited resume as a valid DOCX archive", async () => {
+  const response = await fetch(`${baseUrl}/api/export-resume`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      language: "zh",
+      template: "modern",
+      accentColor: "#2f5f46",
+      draft: {
+        name: "张三",
+        headline: "Java 后端工程师",
+        contact: ["zhangsan@example.com", "上海"],
+        summary: "具备后端接口、数据库与缓存开发经验。",
+        skillGroups: [{ name: "后端", details: ["Java", "Spring Boot", "MySQL"] }],
+        experience: [],
+        projects: [{
+          title: "订单系统",
+          meta: "核心开发",
+          bullets: ["负责订单接口和库存一致性设计。"]
+        }],
+        education: [{ title: "某大学 计算机科学与技术", meta: "2021-2025", bullets: [] }],
+        organizations: [],
+        additionalSections: [],
+        sectionOrder: ["summary", "skills", "projects", "education"]
+      }
+    })
+  });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type"), /wordprocessingml/);
+  assert.match(response.headers.get("content-disposition"), /filename\*=UTF-8''/);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  assert.equal(String.fromCharCode(bytes[0], bytes[1]), "PK");
+  assert.ok(bytes.length > 1000);
+});
+
+test("rejects an empty resume export", async () => {
+  const response = await fetch(`${baseUrl}/api/export-resume`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ draft: {} })
+  });
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { error: "没有可导出的简历内容。" });
 });
 
 test("retries a transient upstream failure and records token usage", async () => {
@@ -199,6 +285,14 @@ async function waitForTask(task, timeoutMs = 2000) {
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   throw new Error("Analysis task did not finish in time");
+}
+
+async function readAdminStats() {
+  const response = await fetch(`${baseUrl}/api/admin/stats`, {
+    headers: { Authorization: `Bearer ${process.env.ADMIN_STATS_TOKEN}` }
+  });
+  assert.equal(response.status, 200);
+  return response.json();
 }
 
 function validPayload() {

@@ -1,0 +1,26 @@
+[Unit]
+Description=Resume Fit AI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=resume-fit
+Group=resume-fit
+WorkingDirectory=/opt/resume-fit-ai
+EnvironmentFile=/etc/resume-fit-ai.env
+ExecStart=/usr/bin/node /opt/resume-fit-ai/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectHome=true
+MemoryMax=768M
+LimitNOFILE=16384
+
+[Install]
+WantedBy=multi-user.target

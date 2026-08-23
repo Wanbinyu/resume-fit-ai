@@ -55,6 +55,29 @@
               </div>
             </div>
 
+            <div class="basic-info-picker">
+              <div class="basic-info-heading">
+                <strong>基础信息</strong>
+                <span>仅保存在当前浏览器，不发送给 AI</span>
+              </div>
+              <div class="field-row">
+                <label for="candidateName">姓名</label>
+                <input id="candidateName" name="candidateName" type="text" maxlength="100" autocomplete="name" placeholder="请输入姓名" />
+              </div>
+              <div class="field-row">
+                <label for="candidatePhone">手机号码</label>
+                <input id="candidatePhone" name="candidatePhone" type="tel" maxlength="40" autocomplete="tel" placeholder="请输入手机号码" />
+              </div>
+              <div class="field-row">
+                <label for="candidateEmail">邮箱</label>
+                <input id="candidateEmail" name="candidateEmail" type="email" maxlength="160" autocomplete="email" placeholder="请输入邮箱" />
+              </div>
+              <div class="field-row">
+                <label for="candidateLocation">所在城市</label>
+                <input id="candidateLocation" name="candidateLocation" type="text" maxlength="100" autocomplete="address-level2" placeholder="例如：杭州" />
+              </div>
+            </div>
+
             <div class="field-row">
               <label for="language">输出语言</label>
               <select id="language" name="language">
@@ -88,8 +111,9 @@
               <button class="secondary" type="button" id="sampleBtn" disabled>填入样例</button>
               <a class="secondary button-link" href="/?sample=full" id="fullSampleLink">查看完整样例</a>
               <button class="secondary" type="submit" data-mode="preview" disabled>免费快速诊断</button>
-              <button class="primary" type="submit" data-mode="full" disabled>完整生成</button>
+              <button class="primary" type="submit" data-mode="full" disabled>免费完整生成</button>
             </div>
+            <p class="browser-storage-notice"><strong>请及时导出：</strong>服务器不会保存简历。所有修改和草稿都是在当前浏览器。导出前请勿关闭页面、使用无痕模式或清理浏览器数据，以免内容无法恢复。</p>
           </form>
 
           <section class="panel result-panel">
@@ -113,6 +137,24 @@
               <span id="reportMeta">尚未生成</span>
               <button class="secondary compact-button" type="button" id="copyReportBtn" disabled>复制报告</button>
             </div>
+
+            <details class="tip-support" id="tipSupport" hidden>
+              <summary>
+                <span><strong>这份结果对你有帮助？</strong>可自愿支持 1～2 元 AI 与服务器成本</span>
+                <span class="tip-support-action">查看赞赏码</span>
+              </summary>
+              <p>完全自愿，不影响继续编辑或导出。感谢你帮助这个小工具继续运行。</p>
+              <div class="tip-support-grid">
+                <figure>
+                  <img src="/assets/tip-wechat.jpg" alt="微信赞赏码" loading="lazy" />
+                  <figcaption>微信赞赏</figcaption>
+                </figure>
+                <figure>
+                  <img src="/assets/tip-alipay.jpg" alt="支付宝收款码" loading="lazy" />
+                  <figcaption>支付宝</figcaption>
+                </figure>
+              </div>
+            </details>
 
             <div class="preview-upgrade" id="previewUpgrade" hidden>
               <span>快速诊断已完成。完整生成将按岗位重写简历，并补齐全部问题详解、项目方案、面试题、求职信和文件导出。</span>
@@ -197,7 +239,7 @@
             </div>
 
             <div class="tab-panel" id="layout">
-              <p class="premium-inline" id="layoutPreviewNotice">当前按原简历生成排版预览；完整报告会按岗位重写，并支持编辑和 PDF 导出。</p>
+              <p class="premium-inline" id="layoutPreviewNotice">当前按原简历生成排版预览；完整报告会按岗位重写，并解锁结构化编辑与文件导出。</p>
               <div class="layout-toolbar" aria-label="简历排版设置">
                 <div class="toolbar-group">
                   <span class="toolbar-label">模板</span>
@@ -231,20 +273,48 @@
                   </div>
                 </div>
 
-                <button class="primary export-button" type="button" id="printBtn">导出 PDF</button>
+                <div class="toolbar-group export-toolbar">
+                  <span class="toolbar-label">导出格式</span>
+                  <div class="export-control">
+                    <select id="resumeExportFormat" aria-label="简历导出格式">
+                      <option value="pdf" selected>PDF</option>
+                      <option value="docx">Word (.docx)</option>
+                      <option value="txt">TXT (.txt)</option>
+                    </select>
+                    <button class="primary export-button" type="button" id="exportResumeBtn">导出</button>
+                  </div>
+                </div>
               </div>
 
-              <div class="resume-stage">
-                <article class="resume-paper template-classic" id="resumePaper" contenteditable="true" spellcheck="false" title="点击可直接编辑简历内容">
-                  <div class="resume-empty">生成报告后，这里会出现可导出的简历。</div>
-                </article>
+              <div class="editor-commandbar" id="editorCommandbar">
+                <div class="editor-history-actions">
+                  <button class="secondary icon-button" type="button" id="undoResumeBtn" aria-label="撤销" title="撤销" disabled>&#8630;</button>
+                  <button class="secondary icon-button" type="button" id="redoResumeBtn" aria-label="重做" title="重做" disabled>&#8631;</button>
+                  <button class="secondary compact-button" type="button" id="resetResumeBtn" disabled>恢复 AI 原稿</button>
+                  <button class="secondary compact-button" type="button" id="restoreLocalResumeBtn" disabled>恢复本地修改</button>
+                </div>
+                <div class="editor-state">
+                  <span id="editorSaveStatus">尚未生成可编辑简历</span>
+                  <span class="page-status" id="resumePageStatus">-- 页</span>
+                </div>
+              </div>
+
+              <div class="resume-editor-workspace">
+                <aside class="resume-editor-panel" id="resumeEditor" aria-label="简历内容编辑器">
+                  <div class="editor-empty">生成完整报告后，可在这里逐项修改简历。</div>
+                </aside>
+                <div class="resume-stage">
+                  <article class="resume-paper template-classic" id="resumePaper" aria-label="简历 A4 预览">
+                    <div class="resume-empty">生成报告后，这里会出现可导出的简历。</div>
+                  </article>
+                </div>
               </div>
             </div>
           </section>
         </div>
 
         <footer class="privacy-note">
-          <span>上传文件仅在内存中解析，分析任务会自动过期；最近报告只保存在当前浏览器。</span>
+          <span>服务器不会保存简历。所有修改和草稿都是在当前浏览器，请在关闭页面前完成导出。</span>
           <span><a href="/privacy.html">隐私政策</a><a href="/terms.html">用户协议</a></span>
         </footer>
       </section>

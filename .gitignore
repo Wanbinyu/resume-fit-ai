@@ -1,5 +1,6 @@
 node_modules/
 .env
+.admin-stats-token
 npm-debug.log*
 .DS_Store
 *.lnk

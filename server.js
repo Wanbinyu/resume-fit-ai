@@ -4,7 +4,8 @@ import express from "express";
 import helmet from "helmet";
 import mammoth from "mammoth";
 import multer from "multer";
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFParse } from "pdf-parse";
@@ -23,11 +24,16 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
+const host = process.env.HOST || "0.0.0.0";
 let docxRuntime;
 const requestLog = new Map();
 const idempotencyLog = new Map();
 const startedAt = Date.now();
 const dailyUsage = { day: currentUtcDay(), accepted: 0 };
+const usageStatsFile = String(process.env.USAGE_STATS_FILE || "").trim();
+const usageHashSalt = String(process.env.USAGE_HASH_SALT || "");
+const persistentUsage = loadPersistentUsageStats();
+const fullGenerationVisitorHashes = new Set(persistentUsage.visitorHashes);
 const runtimeStats = {
   accepted: 0,
   succeeded: 0,
@@ -115,10 +121,10 @@ app.get("/api/public-config", (_req, res) => {
   });
 });
 
-app.get("/api/admin/stats", (req, res) => {
+app.get("/api/admin/stats", requestLimiter("admin-stats", 10), (req, res) => {
   const configuredToken = process.env.ADMIN_STATS_TOKEN || "";
   const suppliedToken = readBearerToken(req);
-  if (configuredToken.length < 24 || !secureStringEqual(configuredToken, suppliedToken)) {
+  if (configuredToken.length < 12 || !secureStringEqual(configuredToken, suppliedToken)) {
     return res.status(configuredToken ? 401 : 404).json({ error: "未找到。" });
   }
 
@@ -131,7 +137,12 @@ app.get("/api/admin/stats", (req, res) => {
     uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
     queue,
     dailyUsage: { ...dailyUsage, limit: clampNumber(process.env.AI_DAILY_TASK_LIMIT, 1, 100_000, 200) },
-    requests: { ...runtimeStats, averageDurationMs }
+    requests: { ...runtimeStats, averageDurationMs },
+    fullGeneration: {
+      totalClicks: persistentUsage.totalClicks,
+      approximateUniqueBrowsers: fullGenerationVisitorHashes.size,
+      lastGeneratedAt: persistentUsage.lastGeneratedAt
+    }
   });
 });
 
@@ -262,6 +273,7 @@ app.post("/api/analyze", requestLimiter("analyze", clampNumber(process.env.ANALY
     });
     runtimeStats.accepted += 1;
     if (aiConfigured) dailyUsage.accepted += 1;
+    if (payload.mode === "full") recordFullGenerationUsage(req.get("X-Visitor-Id"));
     res.status(202).json(task);
   } catch (error) {
     if (error instanceof QueueFullError) {
@@ -304,6 +316,32 @@ app.post("/api/export-targeting", requestLimiter("export", 30), async (req, res)
     res.send(buffer);
   } catch (error) {
     console.error("Targeting plan export failed:", error.message);
+    res.status(500).json({ error: "Word 导出失败，请改用 TXT 后重试。" });
+  }
+});
+
+app.post("/api/export-resume", requestLimiter("resume-export", 30), async (req, res) => {
+  try {
+    const draft = normalizeModelReport({ resumeDraft: req.body?.draft }).resumeDraft;
+    if (!hasResumeDraftContent(draft)) {
+      return res.status(400).json({ error: "没有可导出的简历内容。" });
+    }
+
+    const language = req.body?.language === "en" ? "en" : "zh";
+    const candidateType = req.body?.candidateType === "experienced" ? "experienced" : "fresh";
+    const template = req.body?.template === "modern" ? "modern" : "classic";
+    const accentColor = normalizeAccentColor(req.body?.accentColor);
+    const buffer = await buildResumeDocx(draft, { language, candidateType, template, accentColor });
+    const candidateName = draft.name || (language === "en" ? "Candidate" : "候选人");
+    const encodedName = encodeURIComponent(`${candidateName}-岗位定向简历.docx`);
+    res.set({
+      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "Content-Disposition": `attachment; filename="resume.docx"; filename*=UTF-8''${encodedName}`,
+      "Content-Length": String(buffer.length)
+    });
+    res.send(buffer);
+  } catch (error) {
+    console.error("Resume export failed:", error.message);
     res.status(500).json({ error: "Word 导出失败，请改用 TXT 后重试。" });
   }
 });
@@ -388,6 +426,52 @@ function getClientIp(req) {
 
 function currentUtcDay() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function loadPersistentUsageStats() {
+  const fallback = { version: 1, totalClicks: 0, visitorHashes: [], lastGeneratedAt: "" };
+  if (!usageStatsFile) return fallback;
+  try {
+    const saved = JSON.parse(readFileSync(usageStatsFile, "utf8"));
+    return {
+      version: 1,
+      totalClicks: Math.max(0, Math.floor(Number(saved.totalClicks) || 0)),
+      visitorHashes: Array.isArray(saved.visitorHashes)
+        ? [...new Set(saved.visitorHashes.filter((item) => /^[a-f0-9]{64}$/.test(item)))].slice(0, 1_000_000)
+        : [],
+      lastGeneratedAt: typeof saved.lastGeneratedAt === "string" ? saved.lastGeneratedAt.slice(0, 40) : ""
+    };
+  } catch (error) {
+    if (error.code !== "ENOENT") console.error("Usage statistics load failed:", error.message);
+    return fallback;
+  }
+}
+
+function recordFullGenerationUsage(visitorId) {
+  persistentUsage.totalClicks += 1;
+  persistentUsage.lastGeneratedAt = new Date().toISOString();
+  const normalizedVisitorId = String(visitorId || "").trim();
+  if (usageHashSalt.length >= 24 && /^[A-Za-z0-9_-]{20,100}$/.test(normalizedVisitorId)) {
+    fullGenerationVisitorHashes.add(createHash("sha256").update(`${usageHashSalt}:${normalizedVisitorId}`).digest("hex"));
+  }
+  persistUsageStats();
+}
+
+function persistUsageStats() {
+  if (!usageStatsFile) return;
+  try {
+    mkdirSync(path.dirname(usageStatsFile), { recursive: true, mode: 0o700 });
+    const temporaryFile = `${usageStatsFile}.${process.pid}.tmp`;
+    writeFileSync(temporaryFile, JSON.stringify({
+      version: 1,
+      totalClicks: persistentUsage.totalClicks,
+      visitorHashes: [...fullGenerationVisitorHashes],
+      lastGeneratedAt: persistentUsage.lastGeneratedAt
+    }), { encoding: "utf8", mode: 0o600 });
+    renameSync(temporaryFile, usageStatsFile);
+  } catch (error) {
+    console.error("Usage statistics save failed:", error.message);
+  }
 }
 
 function resetDailyUsageIfNeeded() {
@@ -588,13 +672,7 @@ function buildPreviewEntries(lines, fallbackTitle) {
 }
 
 async function buildTargetingDocx(plan, targetRole) {
-  if (!docxRuntime) {
-    const localStorageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
-    if (localStorageDescriptor?.get) {
-      Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true });
-    }
-    docxRuntime = await import("docx");
-  }
+  await loadDocxRuntime();
   const { Document, HeadingLevel, Packer, Paragraph, TextRun } = docxRuntime;
   const decisionLabels = { keep: "保留", strengthen: "强化", replace: "替换", remove: "删除" };
   const actionLabels = { move_up: "前置", move_down: "后移", expand: "展开", condense: "压缩", remove: "移除" };
@@ -668,11 +746,163 @@ async function buildTargetingDocx(plan, targetRole) {
   return Packer.toBuffer(document);
 }
 
+async function loadDocxRuntime() {
+  if (!docxRuntime) {
+    const localStorageDescriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    if (localStorageDescriptor?.get) {
+      Object.defineProperty(globalThis, "localStorage", { value: undefined, configurable: true });
+    }
+    docxRuntime = await import("docx");
+  }
+}
+
 function appendDocxList(children, title, items = []) {
   if (!Array.isArray(items) || !items.length) return;
   const { Paragraph, TextRun } = docxRuntime;
   children.push(new Paragraph({ children: [new TextRun({ text: title, bold: true })] }));
   items.forEach((item) => children.push(new Paragraph({ text: item, bullet: { level: 0 } })));
+}
+
+async function buildResumeDocx(draft, options) {
+  await loadDocxRuntime();
+  const { AlignmentType, BorderStyle, Document, Packer, Paragraph, TextRun } = docxRuntime;
+  const { language, candidateType, template, accentColor } = options;
+  const labels = language === "en"
+    ? {
+        summary: "PROFILE",
+        skills: "SKILLS",
+        experience: "EXPERIENCE",
+        projects: "PROJECTS",
+        education: "EDUCATION",
+        organizations: "LEADERSHIP & ACTIVITIES"
+      }
+    : {
+        summary: "职业概述",
+        skills: "核心技能",
+        experience: "工作经历",
+        projects: "项目经历",
+        education: "教育经历",
+        organizations: "校园与组织经历"
+      };
+  const children = [];
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 80 },
+    children: [new TextRun({ text: draft.name || (language === "en" ? "Candidate" : "候选人"), bold: true, size: 34 })]
+  }));
+  if (draft.headline) {
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 70 },
+      children: [new TextRun({ text: draft.headline, bold: true, color: accentColor, size: 23 })]
+    }));
+  }
+  if (draft.contact.length) {
+    children.push(new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 180 },
+      children: [new TextRun({ text: draft.contact.join("  |  "), color: "5B6570", size: 18 })]
+    }));
+  }
+
+  const sectionHeading = (title) => new Paragraph({
+    keepNext: true,
+    spacing: { before: 180, after: 80 },
+    border: template === "classic"
+      ? { bottom: { color: accentColor, style: BorderStyle.SINGLE, size: 6, space: 3 } }
+      : undefined,
+    shading: template === "modern" ? { fill: accentColor } : undefined,
+    indent: template === "modern" ? { left: 100, right: 100 } : undefined,
+    children: [new TextRun({
+      text: title,
+      bold: true,
+      color: template === "modern" ? "FFFFFF" : accentColor,
+      size: 22
+    })]
+  });
+  const addSection = (title, content) => {
+    if (!content.length) return;
+    children.push(sectionHeading(title), ...content);
+  };
+  const entryParagraphs = (entries = []) => entries.flatMap((entry) => {
+    const result = [];
+    if (entry.title || entry.meta) {
+      result.push(new Paragraph({
+        keepNext: Boolean(entry.bullets.length),
+        spacing: { before: 80, after: 35 },
+        children: [
+          new TextRun({ text: entry.title || "", bold: true, size: 20 }),
+          new TextRun({ text: entry.meta ? `  ${entry.meta}` : "", color: "626C76", size: 18 })
+        ]
+      }));
+    }
+    entry.bullets.forEach((bullet) => result.push(new Paragraph({
+      text: bullet,
+      bullet: { level: 0 },
+      spacing: { after: 35 },
+      keepLines: true
+    })));
+    return result;
+  });
+  const skills = draft.skillGroups.length
+    ? draft.skillGroups.map((group) => new Paragraph({
+        spacing: { after: 45 },
+        children: [
+          new TextRun({ text: group.name ? `${group.name}${language === "en" ? ": " : "："}` : "", bold: true }),
+          new TextRun((group.details || []).join(language === "en" ? ", " : "、"))
+        ]
+      }))
+    : draft.skills.map((skill) => new Paragraph({ text: skill, bullet: { level: 0 }, spacing: { after: 35 } }));
+  const writers = {
+    summary: () => addSection(labels.summary, draft.summary ? [new Paragraph({ text: draft.summary, keepLines: true })] : []),
+    skills: () => addSection(labels.skills, skills),
+    experience: () => addSection(labels.experience, entryParagraphs(draft.experience)),
+    projects: () => addSection(labels.projects, entryParagraphs(draft.projects)),
+    education: () => addSection(labels.education, entryParagraphs(draft.education)),
+    organizations: () => addSection(labels.organizations, entryParagraphs(draft.organizations)),
+    additional: () => draft.additionalSections.forEach((section) => {
+      addSection(section.title, section.items.map((item) => new Paragraph({ text: item, bullet: { level: 0 }, spacing: { after: 35 } })));
+    })
+  };
+  const defaultOrder = candidateType === "experienced"
+    ? ["summary", "skills", "experience", "projects", "education", "organizations", "additional"]
+    : ["summary", "skills", "education", "projects", "experience", "organizations", "additional"];
+  const requestedOrder = draft.sectionOrder.filter((key) => defaultOrder.includes(key));
+  [...new Set([...requestedOrder, ...defaultOrder])].forEach((key) => writers[key]?.());
+
+  const document = new Document({
+    styles: {
+      default: {
+        document: {
+          run: { font: language === "en" ? "Arial" : "Microsoft YaHei", size: 19, color: "22272B" },
+          paragraph: { spacing: { line: 290, after: 70 } }
+        }
+      }
+    },
+    sections: [{
+      properties: {
+        page: {
+          size: { width: 11906, height: 16838 },
+          margin: { top: 850, right: 1020, bottom: 850, left: 1020 }
+        }
+      },
+      children
+    }]
+  });
+  return Packer.toBuffer(document);
+}
+
+function hasResumeDraftContent(draft) {
+  return Boolean(
+    draft.name || draft.headline || draft.summary || draft.contact.length || draft.skills.length ||
+    draft.skillGroups.length || draft.experience.length || draft.projects.length || draft.education.length ||
+    draft.organizations.length || draft.additionalSections.length
+  );
+}
+
+function normalizeAccentColor(value) {
+  const color = sanitizeUntrustedText(value).trim().replace(/^#/, "");
+  return /^[0-9a-f]{6}$/i.test(color) ? color.toUpperCase() : "176B87";
 }
 
 function normalizeDocumentText(text) {
@@ -1575,8 +1805,11 @@ export function validateProductionConfig() {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error("Production startup blocked: PORT must be an integer between 1 and 65535.");
   }
-  if ((process.env.ADMIN_STATS_TOKEN || "").length < 24) {
+  if ((process.env.ADMIN_STATS_TOKEN || "").length < 12) {
     console.warn("ADMIN_STATS_TOKEN is not configured; /api/admin/stats will remain disabled.");
+  }
+  if (usageStatsFile && usageHashSalt.length < 24) {
+    throw new Error("Production startup blocked: configure USAGE_HASH_SALT with at least 24 characters.");
   }
   if (!sanitizePublicSetting(process.env.SITE_OPERATOR_NAME, "") || !sanitizePublicSetting(process.env.SITE_CONTACT, "")) {
     throw new Error("Production startup blocked: configure SITE_OPERATOR_NAME and SITE_CONTACT for legal notices.");
@@ -1585,8 +1818,8 @@ export function validateProductionConfig() {
 
 export function startServer() {
   validateProductionConfig();
-  return app.listen(port, () => {
-    console.log(`Resume Fit AI running at http://localhost:${port}`);
+  return app.listen(port, host, () => {
+    console.log(`Resume Fit AI running at http://${host}:${port}`);
   });
 }
 
