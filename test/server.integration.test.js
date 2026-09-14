@@ -12,6 +12,7 @@ process.env.USAGE_HASH_SALT = "test-usage-hash-salt-that-is-long-enough";
 process.env.USAGE_STATS_FILE = "";
 process.env.SITE_OPERATOR_NAME = "Test Operator";
 process.env.SITE_CONTACT = "https://example.com/contact";
+process.env.BACKEND_PUBLIC_URL = "https://api.example.com";
 
 const { app, stopBackgroundServices, validateProductionConfig } = await import("../server.js");
 let server;
@@ -74,6 +75,19 @@ test("serves the statistics dashboard only from the private path", async () => {
 
   const legacy = await fetch(`${baseUrl}/admin.html`);
   assert.equal(legacy.status, 404);
+});
+
+test("exposes the configured backend URL and user workspace navigation", async () => {
+  const [configResponse, indexResponse] = await Promise.all([
+    fetch(`${baseUrl}/api/public-config`),
+    fetch(`${baseUrl}/index.html`)
+  ]);
+  assert.equal(configResponse.status, 200);
+  assert.equal((await configResponse.json()).backendUrl, "https://api.example.com");
+  assert.equal(indexResponse.status, 200);
+  const index = await indexResponse.text();
+  assert.match(index, /id="versionWorkspaceLink"/);
+  assert.match(index, /版本工作台/);
 });
 
 test("returns the same task for a repeated idempotency key", async () => {

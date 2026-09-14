@@ -1,0 +1,53 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: resume-fit-backend
+  datasource:
+    url: jdbc:h2:mem:resumefit;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      mode: always
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  ai:
+    openai:
+      api-key: ${AI_API_KEY:demo-key}
+      base-url: ${AI_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${AI_MODEL:deepseek-chat}
+          temperature: 0.2
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-change-this-secret-to-at-least-32-characters}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:720}
+  ai:
+    demo-mode: ${AI_DEMO_MODE:true}
+    max-steps: ${AI_MAX_STEPS:5}
+    model: ${AI_MODEL:deepseek-chat}
+  admin:
+    bootstrap-username: ${ADMIN_BOOTSTRAP_USERNAME:}
+    bootstrap-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+  storage:
+    upload-dir: ${UPLOAD_DIR:./data/uploads}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.wanbinyu.resumefit: INFO

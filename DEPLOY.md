@@ -43,6 +43,7 @@ ALLOW_DEMO_MODE=false
 ADMIN_STATS_TOKEN=使用_openssl_rand_hex_32_生成
 SITE_OPERATOR_NAME=实际运营主体或个人姓名
 SITE_CONTACT=客服邮箱或以_https_开头的联系页面
+BACKEND_PUBLIC_URL=https://your-backend-domain.com
 ```
 
 生成管理统计令牌：

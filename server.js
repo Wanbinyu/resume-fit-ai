@@ -117,7 +117,8 @@ app.get("/api/health", (_req, res) => {
 app.get("/api/public-config", (_req, res) => {
   res.json({
     operatorName: sanitizePublicSetting(process.env.SITE_OPERATOR_NAME, "Resume Fit AI 运营者"),
-    contact: sanitizePublicSetting(process.env.SITE_CONTACT, "请以正式站点公示信息为准")
+    contact: sanitizePublicSetting(process.env.SITE_CONTACT, "请以正式站点公示信息为准"),
+    backendUrl: sanitizePublicSetting(process.env.BACKEND_PUBLIC_URL, "http://localhost:8080")
   });
 });
 

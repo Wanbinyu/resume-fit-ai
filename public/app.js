@@ -54,6 +54,20 @@ const historyDialog = document.querySelector("#historyDialog");
 const historyList = document.querySelector("#historyList");
 const closeHistoryBtn = document.querySelector("#closeHistoryBtn");
 const clearHistoryBtn = document.querySelector("#clearHistoryBtn");
+const versionWorkspaceLink = document.querySelector("#versionWorkspaceLink");
+
+if (versionWorkspaceLink) {
+  fetch("/api/public-config")
+    .then((response) => response.ok ? response.json() : null)
+    .then((config) => {
+      if (config?.backendUrl) {
+        versionWorkspaceLink.href = `${config.backendUrl.replace(/\/$/, "")}/workspace.html`;
+      }
+    })
+    .catch(() => {
+      // Keep the local development fallback in the link.
+    });
+}
 
 const fields = {
   resume: document.querySelector("#resume"),

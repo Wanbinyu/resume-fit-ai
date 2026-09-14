@@ -2,6 +2,8 @@
 
 一个可直接部署到海外服务器的简历 JD 匹配优化器 MVP。
 
+当前项目已经扩展为“用户端 + Spring Boot 后端 + 简历版本工作台”的模块化单体，适合作为 Java 后端 / AI Agent 面试项目。项目结构、模块边界和分析链路见 [`docs/PROJECT-STRUCTURE.md`](./docs/PROJECT-STRUCTURE.md)。
+
 ## 本地运行
 
 Windows 用户可以直接双击项目根目录中的：
@@ -11,6 +13,8 @@ Windows 用户可以直接双击项目根目录中的：
 ```
 
 启动器会检查 Node.js、在首次运行时安装依赖，并在服务就绪后自动打开浏览器。保持启动器窗口开启；按 `Ctrl+C` 或关闭窗口即可停止服务。
+
+如果需要同时启动前端和 Spring Boot 后端，可以双击 `启动全栈服务.cmd`。该脚本要求 Node.js 22.3+；检测到 Maven 3.9+ 时从源码启动，否则会自动使用已有的 `backend/target` 后端 jar。
 
 也可以在终端手动运行：
 
@@ -26,6 +30,19 @@ http://localhost:3000
 ```
 
 没有配置 API Key 时，系统会进入演示模式，方便先看页面和流程。
+
+## Spring Boot 后端
+
+后端位于 [`backend/`](./backend/)，使用 Java 21、Spring Boot、MyBatis-Plus、MySQL/H2、JWT 和 Spring AI。
+默认使用 H2 + Demo AI，可直接启动：
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+API 文档：`http://localhost:8080/swagger-ui.html`。正式使用 AI 时设置 `AI_DEMO_MODE=false`、`AI_API_KEY`、`AI_BASE_URL` 和 `AI_MODEL`。
+打开 3000 端口的用户端后，顶部“版本工作台”会进入简历版本管理；入口地址由 `BACKEND_PUBLIC_URL` 配置。
 
 ## 当前功能
 

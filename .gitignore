@@ -4,3 +4,19 @@ node_modules/
 npm-debug.log*
 .DS_Store
 *.lnk
+
+# Spring Boot build output and local runtime data
+backend/target/
+backend/data/
+*.log
+
+# Local experiments and generated artifacts
+tmp/
+.pytest_cache/
+resume-output/
+/*.png
+/*.xml
+
+# IDE metadata
+.idea/
+*.iml
