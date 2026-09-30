@@ -139,3 +139,7 @@ Nginx 反向代理到 `http://127.0.0.1:3000` 即可。
 ## 安全
 
 提示词注入、输出白名单和已知边界见 [SECURITY.md](./SECURITY.md)。
+
+## 许可证
+
+[MIT](./LICENSE)
