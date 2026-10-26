@@ -12,6 +12,11 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiResponse<Void>> handleUploadSize() {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(new ApiResponse<>(false, null, "文件不能超过 5MB，请选择较小的简历文件"));
+    }
     @ExceptionHandler(BusinessException.class)
     ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException exception) {
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, exception.getMessage()));
@@ -28,6 +33,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     ResponseEntity<ApiResponse<Void>> handleConstraint(ConstraintViolationException exception) {
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, exception.getMessage()));
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    ResponseEntity<ApiResponse<Void>> handleNotFound() {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(false, null, "请求的资源不存在"));
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ApiResponse<Void>> handleInvalidParameter() {
+        return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, "请求参数格式不正确"));
     }
 
     @ExceptionHandler(Exception.class)

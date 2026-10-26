@@ -9,14 +9,27 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
+import java.util.Map;
+import com.wanbinyu.resumefit.ai.AiProperties;
+import com.wanbinyu.resumefit.ai.JobSearchProvider;
 
 @RestController
 @RequestMapping("/api/analysis/tasks")
 public class AnalysisController {
     private final AnalysisTaskService service;
+    private final AiProperties properties;
+    private final JobSearchProvider search;
 
-    public AnalysisController(AnalysisTaskService service) {
+    public AnalysisController(AnalysisTaskService service, AiProperties properties, JobSearchProvider search) {
         this.service = service;
+        this.properties = properties; this.search = search;
+    }
+
+    @GetMapping("/capabilities")
+    public ApiResponse<Map<String, Object>> capabilities() {
+        return ApiResponse.ok(Map.of("demo", properties.demoMode(), "model", properties.model(),
+                "searchAvailable", !properties.demoMode() && search.available(), "maxRounds", properties.maxSteps(),
+                "timeoutSeconds", properties.timeoutSeconds()));
     }
 
     @PostMapping

@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS analysis_tasks (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT NOT NULL,
     resume_id BIGINT NOT NULL,
-    job_id BIGINT NOT NULL,
+    job_id BIGINT NULL,
+    request_json TEXT,
     status VARCHAR(20) NOT NULL,
     progress INT NOT NULL DEFAULT 0,
     message VARCHAR(255),
@@ -93,7 +94,7 @@ CREATE TABLE IF NOT EXISTS analysis_reports (
     task_id BIGINT NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
     resume_id BIGINT NOT NULL,
-    job_id BIGINT NOT NULL,
+    job_id BIGINT NULL,
     score INT NOT NULL DEFAULT 0,
     report_json TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

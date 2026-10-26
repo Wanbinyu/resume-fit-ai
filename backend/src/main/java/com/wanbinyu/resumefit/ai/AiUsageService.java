@@ -44,6 +44,21 @@ public class AiUsageService {
         return result;
     }
 
+    public void recordAgent(Long taskId, String provider, Map<?, ?> usage, long durationMs) {
+        // 每个模型请求一条用量记录，避免把多轮 Agent 当成一次调用。
+        int rounds = ((Number) usage.get("modelRounds")).intValue();
+        int input = ((Number) usage.get("reportedInputTokens")).intValue();
+        int output = ((Number) usage.get("reportedOutputTokens")).intValue();
+        for (int i = 0; i < rounds; i++) {
+            AiUsageRecordEntity record = new AiUsageRecordEntity();
+            record.setTaskId(taskId); record.setProvider(provider); record.setModelName(properties.model());
+            // 汇总用量存第一条，其余记录为 0；保留调用次数，禁止猜测 token 或费用。
+            record.setInputTokens(i == 0 ? input : 0); record.setOutputTokens(i == 0 ? output : 0);
+            record.setDurationMs(i == 0 ? durationMs : 0); record.setCreatedAt(LocalDateTime.now());
+            mapper.insert(record);
+        }
+    }
+
     private int estimateTokens(int characters) {
         return Math.max(1, (int) Math.ceil(Math.max(0, characters) / 4.0));
     }

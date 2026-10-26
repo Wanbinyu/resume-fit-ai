@@ -15,6 +15,7 @@ public class AnalysisTaskEntity {
     private Long userId;
     private Long resumeId;
     private Long jobId;
+    private String requestJson;
     private String status;
     private Integer progress;
     private String message;

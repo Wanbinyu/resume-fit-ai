@@ -1,7 +1,9 @@
 server:
-  port: ${PORT:8080}
+  port: ${BACKEND_PORT:8080}
 
 spring:
+  config:
+    import: optional:file:../.env[.properties],optional:file:.env[.properties]
   application:
     name: resume-fit-backend
   datasource:
@@ -17,12 +19,14 @@ spring:
       max-file-size: 5MB
       max-request-size: 6MB
   ai:
+    retry:
+      max-attempts: 1
     openai:
-      api-key: ${AI_API_KEY:demo-key}
+      api-key: ${AI_API_KEY:${DEEPSEEK_API_KEY:demo-key}}
       base-url: ${AI_BASE_URL:https://api.deepseek.com}
       chat:
         options:
-          model: ${AI_MODEL:deepseek-chat}
+          model: ${AI_MODEL:${DEEPSEEK_MODEL:deepseek-chat}}
           temperature: 0.2
 
 mybatis-plus:
@@ -36,13 +40,24 @@ app:
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:720}
   ai:
     demo-mode: ${AI_DEMO_MODE:true}
-    max-steps: ${AI_MAX_STEPS:5}
-    model: ${AI_MODEL:deepseek-chat}
+    max-steps: ${AI_MAX_STEPS:6}
+    max-tool-calls: ${AI_MAX_TOOL_CALLS:12}
+    timeout-seconds: ${AI_TIMEOUT_SECONDS:120}
+    call-timeout-seconds: ${AI_CALL_TIMEOUT_SECONDS:35}
+    token-budget: ${AI_TOKEN_BUDGET:64000}
+    max-output-tokens: ${AI_MAX_OUTPUT_TOKENS:1800}
+    model: ${AI_MODEL:${DEEPSEEK_MODEL:deepseek-chat}}
+  search:
+    provider: ${JOB_SEARCH_PROVIDER:auto}
+    searxng-base-url: ${SEARXNG_BASE_URL:}
+    api-key: ${TAVILY_API_KEY:}
   admin:
     bootstrap-username: ${ADMIN_BOOTSTRAP_USERNAME:}
     bootstrap-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
   storage:
     upload-dir: ${UPLOAD_DIR:./data/uploads}
+  export:
+    font-path: ${RESUME_FONT_PATH:}
 
 springdoc:
   swagger-ui:

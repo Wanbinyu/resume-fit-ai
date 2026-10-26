@@ -12,6 +12,7 @@ backend/data/
 
 # Local experiments and generated artifacts
 tmp/
+work/
 .pytest_cache/
 resume-output/
 /*.png

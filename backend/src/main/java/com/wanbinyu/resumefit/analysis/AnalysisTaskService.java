@@ -11,6 +11,8 @@ import com.wanbinyu.resumefit.resume.ResumeService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
@@ -46,17 +48,33 @@ public class AnalysisTaskService {
     @Transactional
     public AnalysisDtos.TaskView create(Long userId, AnalysisDtos.CreateRequest request) {
         resumeService.requireOwned(userId, request.resumeId());
-        jobService.requireOwned(userId, request.jobId());
+        if (request.jobId() != null) jobService.requireOwned(userId, request.jobId());
+        if (!Boolean.TRUE.equals(request.resumeOnly()) && request.jobId() == null && (request.targetRole() == null || request.targetRole().isBlank())
+                && (request.jobDescription() == null || request.jobDescription().isBlank()))
+            throw new BusinessException("请补充目标岗位，或选择/粘贴目标 JD；城市、公司和年限可选");
         AnalysisTaskEntity task = new AnalysisTaskEntity();
         task.setUserId(userId);
         task.setResumeId(request.resumeId());
         task.setJobId(request.jobId());
+        try { task.setRequestJson(objectMapper.writeValueAsString(request)); }
+        catch (Exception exception) { throw new BusinessException("任务输入无法保存"); }
         task.setStatus("PENDING");
         task.setProgress(0);
         task.setMessage("任务已创建，等待执行");
         task.setRetryCount(0);
         taskMapper.insert(task);
-        worker.processAsync(task.getId());
+        // 提交后再派发，避免异步线程读到尚未提交的任务。
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() {
+                try { worker.processAsync(task.getId()); }
+                catch (org.springframework.core.task.TaskRejectedException exception) {
+                    taskMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<AnalysisTaskEntity>()
+                            .eq(AnalysisTaskEntity::getId, task.getId()).eq(AnalysisTaskEntity::getStatus, "PENDING")
+                            .set(AnalysisTaskEntity::getStatus, "FAILED").set(AnalysisTaskEntity::getErrorMessage, "任务队列已满，请稍后重试")
+                            .set(AnalysisTaskEntity::getMessage, "任务队列已满").set(AnalysisTaskEntity::getCompletedAt, LocalDateTime.now()));
+                }
+            }
+        });
         return view(task);
     }
 
@@ -74,14 +92,12 @@ public class AnalysisTaskService {
     public AnalysisDtos.TaskView cancel(Long userId, Long taskId) {
         AnalysisTaskEntity task = requireOwned(userId, taskId);
         if (isTerminal(task.getStatus())) return view(task);
-        task.setStatus("CANCELLED");
-        task.setProgress(0);
-        task.setMessage("任务已取消");
-        task.setErrorMessage("用户取消了任务");
-        task.setCompletedAt(LocalDateTime.now());
-        task.setUpdatedAt(LocalDateTime.now());
-        taskMapper.updateById(task);
-        return view(task);
+        taskMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<AnalysisTaskEntity>()
+                .eq(AnalysisTaskEntity::getId, taskId).in(AnalysisTaskEntity::getStatus, "PENDING", "RUNNING")
+                .set(AnalysisTaskEntity::getStatus, "CANCELLED").set(AnalysisTaskEntity::getProgress, 0)
+                .set(AnalysisTaskEntity::getMessage, "任务已取消").set(AnalysisTaskEntity::getErrorMessage, "用户取消了任务")
+                .set(AnalysisTaskEntity::getCompletedAt, LocalDateTime.now()).set(AnalysisTaskEntity::getUpdatedAt, LocalDateTime.now()));
+        return view(requireOwned(userId, taskId));
     }
 
     public SseEmitter stream(Long userId, Long taskId) {
@@ -136,6 +152,6 @@ public class AnalysisTaskService {
     }
 
     private boolean isTerminal(String status) {
-        return "SUCCEEDED".equals(status) || "FAILED".equals(status) || "CANCELLED".equals(status);
+        return "SUCCEEDED".equals(status) || "FAILED".equals(status) || "CANCELLED".equals(status) || "NEEDS_INPUT".equals(status);
     }
 }

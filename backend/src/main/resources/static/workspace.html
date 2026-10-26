@@ -1,47 +1,505 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Resume Fit AI · 简历版本工作台</title>
   <style>
-    :root{color-scheme:dark;font-family:Inter,"Microsoft YaHei",sans-serif;--bg:#09101f;--panel:#121d32;--panel2:#17253e;--line:#2a3a5b;--muted:#91a0bd;--text:#eef3ff;--blue:#a7b5ff;--cyan:#63e4c0;--pink:#ff9db9}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 88% 0,#263560 0,#09101f 40%);color:var(--text)}button,input,textarea,select{font:inherit}button{cursor:pointer}.wrap{width:min(1280px,calc(100% - 34px));margin:auto;padding:31px 0 60px}.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:25px}.brand{display:flex;align-items:center;gap:11px;font-weight:750}.mark{display:grid;place-items:center;width:35px;height:35px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#0b1323;font-size:12px}.eyebrow{margin-top:23px;color:var(--cyan);font-size:11px;letter-spacing:.15em;text-transform:uppercase}h1{margin:6px 0;font-size:32px;letter-spacing:-.03em}.sub{margin:0;color:var(--muted);font-size:14px}.top-actions{display:flex;gap:9px}.btn{border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:#dce5ff;background:#18253e}.btn:hover{border-color:#6577a8}.btn.primary{border:0;color:#091424;background:linear-gradient(135deg,var(--cyan),var(--blue));font-weight:700}.layout{display:grid;grid-template-columns:285px 1fr;gap:16px}.card{border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,#142039,#10192c);box-shadow:0 17px 45px #02061755}.card-head{display:flex;align-items:center;justify-content:space-between;padding:17px 19px;border-bottom:1px solid var(--line)}h2{margin:0;font-size:16px}.hint{color:var(--muted);font-size:12px}.body{padding:18px 19px}.side-card{height:max-content}.select, input, textarea{width:100%;border:1px solid #30415f;border-radius:9px;outline:0;color:var(--text);background:#0c1527}.select,input{padding:11px}textarea{min-height:250px;padding:13px;line-height:1.7;resize:vertical}.select:focus,input:focus,textarea:focus{border-color:var(--blue)}label{display:block;color:#aebbd5;font-size:12px;margin:12px 0 6px}.resume-list{display:grid;gap:7px;margin-top:12px}.resume-item{padding:11px 12px;border:1px solid transparent;border-radius:10px;color:#b8c5df;background:#14213a;text-align:left}.resume-item.active,.resume-item:hover{border-color:#53699c;background:#1d2b4b}.resume-item small{display:block;margin-top:4px;color:var(--muted);font-size:11px}.divider{height:1px;background:#253653;margin:19px 0}.full{width:100%}.stack{display:grid;gap:10px}.toolbar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:14px}.toolbar .select{width:auto;min-width:145px}.versions{display:grid;gap:10px}.version{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:15px;border:1px solid #2a3a5b;border-radius:12px;background:#14213a}.version:hover{border-color:#6579ae}.version-title{font-weight:650}.version-meta{margin-top:7px;color:var(--muted);font-size:11px}.version-meta span{margin-right:12px}.version-actions{display:flex;gap:7px}.mini{padding:7px 10px;border-radius:8px;border:1px solid var(--line);color:#c9d4ef;background:#1b2945;font-size:12px}.mini:hover{border-color:var(--blue)}.published{color:var(--cyan);font-size:11px}.editor{margin-top:16px}.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.analysis{margin-top:16px}.analysis-actions{display:flex;flex-wrap:wrap;gap:9px}.analysis-result{display:none;margin-top:14px;padding:15px;border-radius:11px;background:#101b31}.analysis-result.show{display:block}.score{color:var(--cyan);font-size:38px;font-weight:800}.summary{margin:7px 0 14px;color:#ced8ec;line-height:1.65}.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{padding:5px 9px;border-radius:7px;color:#c4ceff;background:#25345b;font-size:12px}.chip.missing{color:#ffc0cb;background:#4b273c}.trace{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:13px}.trace-item{padding:10px;border:1px solid #2a3b59;border-radius:9px;background:#172640}.trace-item b{display:block;color:var(--cyan);font-size:11px}.trace-item span{display:block;margin-top:5px;color:#d4ddf2;font-size:11px;line-height:1.45}.compare{margin-top:16px}.compare-result{margin-top:12px;color:#cbd6ec;line-height:1.7}.reports{margin-top:16px}.report-item{padding:11px 0;border-bottom:1px solid #253653;font-size:12px}.report-item:last-child{border-bottom:0}.alert{min-height:19px;margin:8px 0;color:var(--pink);font-size:12px}.login{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding:20px;background:#080e1aec;backdrop-filter:blur(10px)}.login.hidden{display:none}.login-box{width:min(410px,100%);padding:30px;border:1px solid #324666;border-radius:20px;background:#121d32;box-shadow:0 25px 70px #020617aa}.login-box h2{margin:26px 0 6px;font-size:23px}.login-box p{margin:0 0 20px;color:var(--muted);font-size:13px}.login-error{min-height:19px;color:var(--pink);font-size:12px}.register-only{display:none}.login.register-mode .register-only{display:block}@media(max-width:900px){.layout{grid-template-columns:1fr}.editor-grid{grid-template-columns:1fr}.trace{grid-template-columns:repeat(2,1fr)}}@media(max-width:540px){.wrap{width:min(100% - 22px,1280px);padding-top:20px}.top{display:block}.top-actions{margin-top:15px}.version{display:block}.version-actions{margin-top:12px}.trace{grid-template-columns:1fr 1fr}}
-  </style>
+:root{color-scheme:dark;font-family:Inter,"Microsoft YaHei",sans-serif;--bg:#0b1220;--line:#293953;--muted:#99a9c2;--text:#edf3ff;--cyan:#72e1c2;--blue:#b1bfff;--pink:#ffb4c6}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top right,#1c2c49 0,transparent 55%),var(--bg);color:var(--text);line-height:1.6}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:default}[hidden]{display:none!important}.wrap{width:min(1440px,calc(100% - 64px));margin:auto;padding:30px 0 64px}.top{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:26px}.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}.mark{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#0b1323;font-size:11px}.eyebrow{display:none}h1{font-size:28px;margin:14px 0 5px;letter-spacing:-.03em}.sub{font-size:13px;color:var(--muted);margin:0}.top-actions{display:flex;gap:9px;flex-shrink:0}.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:22px;align-items:start}.sidebar,.workspace-main{display:grid;gap:16px;min-width:0}.card{border:1px solid var(--line);border-radius:14px;background:#131f32;min-width:0;overflow:hidden}.analysis{border-color:#3b5672;background:linear-gradient(125deg,#182b40,#142034)}.card-head{display:flex;align-items:center;gap:10px;padding:17px 20px;cursor:pointer;list-style:none;min-height:64px;user-select:none}.card-head::-webkit-details-marker{display:none}.card-head::marker{content:''}.card-head:hover{background:#ffffff05}.card-head:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:-3px}.card-head h2{margin:0;font-size:15px;font-weight:650;flex:1;min-width:0;line-height:1.5}.panel-meta{font-size:11px;text-align:right;max-width:45%;overflow-wrap:anywhere}.fold-indicator{width:8px;height:8px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);flex-shrink:0;margin:0 3px 0 5px;transition:transform .15s}.panel[open]>.card-head .fold-indicator{transform:rotate(45deg)}.panel[open]>.card-head{border-bottom:1px solid var(--line)}.body{padding:18px 20px 20px}.body>:first-child{margin-top:0}.hint{font-size:12px;color:var(--muted)}.section-intro{font-size:13px;color:#b9c8dd;margin:0 0 14px}.btn{border:1px solid #384b69;border-radius:9px;padding:9px 13px;background:#1b2c45;color:#e0e9fa;font-size:12px;line-height:1.6}.btn:hover{border-color:#8195b9;background:#233650}.btn.primary{border:1px solid transparent;color:#0c2027;background:linear-gradient(120deg,var(--cyan),var(--blue));font-weight:700}.full{width:100%}.toolbar,.analysis-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar{margin:16px 0 0}.alert{color:var(--pink);font-size:12px;margin:9px 0 0;overflow-wrap:anywhere}.alert:empty{display:none}label{display:block;font-size:12px;color:#bdcbe0;margin:12px 0 0}.select,input,textarea{display:block;width:100%;border:1px solid #344765;border-radius:8px;background:#0e1829;color:var(--text);outline:0;margin-top:6px}input,.select{padding:10px 11px;font-size:13px}input[type=file]{font-size:11px;padding:10px;max-width:100%}input[type=file]::file-selector-button{border:0;border-radius:5px;background:#2d4262;color:var(--text);padding:5px 7px;margin-right:7px}textarea{padding:11px 12px;min-height:170px;resize:vertical;font-size:13px;line-height:1.8}#agentJobText{min-height:105px}input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #72e1c212}.editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.editor-grid>*,.optional-grid>*{min-width:0}.editor-grid>label{margin-top:0}.optional-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.inline-fold{margin-top:14px;border:1px dashed #334864;border-radius:8px;padding:9px 11px}.inline-fold>summary{font-size:12px;color:#bbcbe2;cursor:pointer}.inline-fold>summary .hint{margin-left:12px}.resume-list{display:grid;gap:8px}.resume-item{width:100%;text-align:left;padding:10px 11px;color:#c4d2e8;border:1px solid #293b59;border-radius:8px;background:#17253b;font-size:13px;overflow-wrap:anywhere}.resume-item.active,.resume-item:hover{border-color:#648f99;background:#1b3545}.resume-item small{display:block;font-size:11px;color:var(--muted);margin-top:3px}.sidebar .body>details:not(.panel){margin-top:15px}.sidebar summary{font-size:12px;cursor:pointer}.sidebar .hint{line-height:1.8}.analysis-result,.analysis-result.show{display:grid;gap:16px;background:none;padding:0;margin:0;overflow-wrap:anywhere}.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.insight-grid .card-head{flex-wrap:wrap;gap:6px}.insight-grid .card-head h2{flex-basis:calc(100% - 26px)}.insight-grid .panel-meta{order:3;text-align:left;max-width:100%;flex-basis:100%}.insight-grid .fold-indicator{margin-left:auto}.empty-state{font-size:13px;color:var(--muted);line-height:1.9}.analysis-summary{border-top:1px solid #354b66;margin-top:16px;padding-top:14px;font-size:13px;line-height:1.9;white-space:pre-wrap;color:#d5e1f2}.career-grid{display:grid;gap:12px;margin-top:14px}.career-card{padding:13px 14px;border:1px solid #344c69;border-radius:9px;background:#102033;min-width:0}.career-card p,.career-step p{font-size:13px;line-height:1.85;margin:8px 0}.career-card h4,.career-step h4{margin:4px 0;font-size:14px}.career-tag{color:var(--cyan);font-size:11px}.career-quote{margin:9px 0;padding:8px 11px;border-left:2px solid #6bbfae;background:#20334b;color:#c7d6eb;font-size:12px;line-height:1.85;white-space:pre-wrap}.career-step{padding:13px 0;border-bottom:1px solid var(--line)}.career-step:last-child{border-bottom:0}.career-target{font-size:15px;color:var(--cyan);margin-bottom:8px}.score{font-size:30px;color:var(--cyan);font-weight:750;line-height:1.3;margin-bottom:10px}.score small{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}.chips{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.chip{font-size:12px;border-radius:6px;padding:4px 8px;color:#cbd6ff;background:#283959}.chip.missing{background:#442e43;color:#ffc9d6}.report-item{font-size:12px;padding:12px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.report-item:last-child{border-bottom:0}.body h3{font-size:14px;margin:20px 0 8px}.trace{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.trace-item{padding:10px;border:1px solid var(--line);border-radius:8px;min-width:0}.trace-item b{display:block;color:var(--cyan);font-size:11px}.trace-item span{display:block;font-size:11px;margin-top:4px}.section-divider{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;color:#c0cee3;margin-top:9px}.versions{display:grid;gap:10px}.version{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);border-radius:9px;min-width:0}.version-title{font-size:13px;overflow-wrap:anywhere}.version-meta{font-size:11px;color:var(--muted);margin-top:5px}.version-meta span{display:inline-block;margin-right:10px}.version-actions{display:flex;gap:6px;flex-shrink:0}.mini{border:1px solid #3c4f70;border-radius:7px;background:#20314c;color:#d5e1f5;font-size:12px;padding:6px 10px}.published{color:var(--cyan)}.compare .toolbar{margin-top:0}.toolbar .select{width:auto;max-width:100%;min-width:140px;margin:0}.compare-result{font-size:13px;margin-top:12px}.analysis-actions{margin-top:14px}pre{white-space:pre-wrap;font-family:inherit;font-size:12px;line-height:1.9}#draftContent:not(.empty-state){margin-bottom:14px}.login{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding:20px;background:#080e1aec;backdrop-filter:blur(10px)}.login.hidden{display:none}.login-box{width:min(410px,100%);padding:30px;border:1px solid #324666;border-radius:20px;background:#121d32}.login-box h2{margin:25px 0 6px;font-size:23px}.login-box p{font-size:13px;color:var(--muted);margin-bottom:20px}.login-error{min-height:19px;color:var(--pink);font-size:12px}.register-only{display:none}.login.register-mode .register-only{display:block}details{scroll-margin-top:18px}
+@media(max-width:1150px){.insight-grid{grid-template-columns:1fr}.insight-grid .card-head{flex-wrap:nowrap}.insight-grid .card-head h2{flex-basis:auto}.insight-grid .panel-meta{order:initial;max-width:45%;flex-basis:auto}.wrap{width:calc(100% - 40px)}.layout{gap:16px;grid-template-columns:260px minmax(0,1fr)}}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.sidebar{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.sidebar>#newJobPanel{grid-column:1/-1}.top{align-items:flex-start}.optional-grid{grid-template-columns:1fr}.trace{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.wrap{width:calc(100% - 24px);padding-top:20px}.top{display:block;margin-bottom:20px}h1{font-size:24px}.top-actions{margin-top:16px}.sidebar,.editor-grid{grid-template-columns:1fr}.sidebar>#newJobPanel{grid-column:auto}.body{padding:15px}.card-head{padding:14px 15px;min-height:58px;flex-wrap:wrap}.card-head h2{font-size:14px}.panel-meta{max-width:44%;font-size:10px}.insight-grid .card-head{flex-wrap:wrap}.insight-grid .card-head h2{flex-basis:calc(100% - 25px)}.insight-grid .panel-meta{order:3;max-width:100%;flex-basis:100%}.toolbar .btn{flex:1 1 auto}.version{display:block}.version-actions{margin-top:10px}.section-divider{align-items:flex-start;flex-direction:column;gap:2px}.career-card{padding:11px}.trace{grid-template-columns:1fr 1fr}.inline-fold>summary .hint{display:block;margin-left:15px}}
+@media(prefers-reduced-motion:reduce){.fold-indicator{transition:none}}
+.pdf-frame{width:100%;height:780px;border:1px solid var(--line);border-radius:9px;background:#fff}.pdf-frame:empty{min-width:0}@media(max-width:540px){.pdf-frame{height:580px}}
+</style>
 </head>
   <body>
-  <div id="login" class="login"><form id="loginForm" class="login-box"><div class="brand"><span class="mark">RF</span><span>Resume Fit AI</span></div><h2 id="authTitle">简历版本工作台</h2><p id="authHint">登录后管理原始版、岗位定制版和公开分享版本。</p><label class="register-only">显示名称<input id="displayName" autocomplete="name" placeholder="例如：张三"></label><label>用户名<input id="username" required autocomplete="username" placeholder="请输入用户名"></label><label>密码<input id="password" required type="password" autocomplete="current-password" placeholder="至少 8 位字符"></label><div id="loginError" class="login-error"></div><button id="authSubmit" class="btn primary full" type="submit">登录工作台</button><button id="authToggle" class="btn full" type="button" style="margin-top:9px">首次使用？注册账号</button></form></div>
+  <div id="login" class="login">
+<form id="loginForm" class="login-box">
+<div class="brand">
+<span class="mark">RF</span>
+<span>Resume Fit AI</span>
+</div>
+<h2 id="authTitle">简历版本工作台</h2>
+<p id="authHint">登录后管理原始版、岗位定制版和公开分享版本。</p>
+<label class="register-only">显示名称<input id="displayName" autocomplete="name" placeholder="例如：张三">
+</label>
+<label>用户名<input id="username" required autocomplete="username" placeholder="请输入用户名">
+</label>
+<label>密码<input id="password" required type="password" autocomplete="current-password" placeholder="至少 8 位字符">
+</label>
+<div id="loginError" class="login-error">
+</div>
+<button id="authSubmit" class="btn primary full" type="submit">登录工作台</button>
+<button id="authToggle" class="btn full" type="button" style="margin-top:9px">首次使用？注册账号</button>
+</form>
+</div>
   <main class="wrap">
-    <header class="top"><div><div class="brand"><span class="mark">RF</span><span>Resume Fit AI</span></div><div class="eyebrow">Version Workspace</div><h1>简历版本工作台</h1><p class="sub">让每一次岗位分析都沉淀成可编辑、可对比、可分享的简历版本。</p></div><div class="top-actions"><button id="refreshBtn" class="btn">↻ 刷新</button><button id="logoutBtn" class="btn">退出登录</button></div></header>
-    <div class="layout">
-      <aside class="card side-card"><div class="card-head"><h2>我的简历</h2><span id="resumeCount" class="hint">0</span></div><div class="body"><div id="resumeList" class="resume-list"><div class="hint">正在读取…</div></div><div class="divider"></div><h2 style="font-size:14px">新增简历</h2><label>标题<input id="newResumeTitle" placeholder="例如：Java 后端简历"></label><label>简历内容<textarea id="newResumeContent" style="min-height:110px" placeholder="粘贴简历内容"></textarea></label><div id="resumeError" class="alert"></div><button id="createResumeBtn" class="btn primary full">保存简历</button><div class="divider"></div><h2 style="font-size:14px">新增目标 JD</h2><label>岗位标题<input id="newJobTitle" placeholder="例如：Java 后端工程师"></label><label>JD 内容<textarea id="newJobContent" style="min-height:90px" placeholder="粘贴岗位描述"></textarea></label><div id="jobError" class="alert"></div><button id="createJobBtn" class="btn full">保存 JD</button></div></aside>
-      <section>
-        <article class="card"><div class="card-head"><h2>版本时间线</h2><span id="versionHint" class="hint">请先选择简历</span></div><div class="body"><div id="versions" class="versions"><div class="empty hint">选择左侧简历后查看版本</div></div></div></article>
-        <article class="card editor"><div class="card-head"><h2 id="editorTitle">新建简历版本</h2><span class="hint">内容最多 6000 字符</span></div><div class="body"><div class="editor-grid"><div><label>版本名称<input id="versionName" maxlength="160" placeholder="例如：Java 后端岗位定制版"></label><label>目标 JD<select id="jobSelect" class="select"><option value="">不绑定目标 JD</option></select></label><label>关联分析任务<input id="taskId" type="number" min="1" placeholder="运行分析后自动填充"></label></div><div><label>版本来源<select id="versionSource" class="select"><option value="MANUAL">手动编辑</option><option value="AI_OPTIMIZED">AI 优化</option><option value="JOB_TARGETED">岗位定制</option></select></label><label>版本内容<textarea id="versionContent" maxlength="6000" placeholder="编辑此版本的简历内容"></textarea></label></div></div><div id="versionError" class="alert"></div><div class="analysis-actions"><button id="newVersionBtn" class="btn">清空新建</button><button id="saveVersionBtn" class="btn primary">保存版本</button></div></div></article>
-        <article class="card analysis"><div class="card-head"><h2>JD 定向分析</h2><span class="hint">Demo Agent · 离线运行</span></div><div class="body"><div class="toolbar"><select id="analysisJobSelect" class="select"><option value="">选择目标 JD</option></select><button id="analyzeBtn" class="btn primary">运行 Agent 分析</button></div><div id="analysisError" class="alert"></div><div id="analysisResult" class="analysis-result"></div></div></article>
-        <article class="card compare"><div class="card-head"><h2>版本对比</h2><span class="hint">按非空行统计变化</span></div><div class="body"><div class="toolbar"><select id="fromVersion" class="select"><option value="">基准版本</option></select><span class="hint">→</span><select id="toVersion" class="select"><option value="">目标版本</option></select><button id="compareBtn" class="btn">开始对比</button></div><div id="compareResult" class="compare-result"></div></div></article>
-        <article class="card reports"><div class="card-head"><h2>历史分析报告</h2><span id="reportHint" class="hint">—</span></div><div id="reports" class="body"><div class="hint">暂无报告</div></div></article>
-      </section>
-    </div>
-  </main>
+<header class="top">
+<div>
+<div class="brand">
+<span class="mark">RF</span>
+<span>Resume Fit AI</span>
+</div>
+<div class="eyebrow">Version Workspace</div>
+<h1>简历版本工作台</h1>
+<p class="sub">从简历出发，找到适合的岗位，明确下一步调整方向。</p>
+</div>
+<div class="top-actions">
+<button id="refreshBtn" class="btn">↻ 刷新</button>
+<button id="logoutBtn" class="btn">退出登录</button>
+</div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+<details id="resumesPanel" data-panel class="card panel " open>
+<summary class="card-head">
+<h2>我的简历</h2>
+<span class="panel-meta hint">
+<span id="resumeCount">0 份</span>
+</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="resumeList" class="resume-list">
+<div class="hint">正在读取…</div>
+</div>
+</div>
+</details>
+<details id="importPanel" data-panel class="card panel " open>
+<summary class="card-head">
+<h2>导入简历</h2>
+<span class="panel-meta hint">PDF / Word / TXT</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<label>选择简历文件<input id="resumeFile" type="file" accept=".pdf,.doc,.docx,.txt">
+</label>
+<p class="hint">支持 PDF、Word、TXT，最大 5MB。导入后保存原始版并自动分析；没有 JD 时先做简历体检和岗位方向分析；填写期望岗位可获得调整建议。真实模型模式会使用模型额度。</p>
+<button id="importResumeBtn" class="btn primary full">导入并自动分析</button>
+<div id="importStatus" class="alert" role="status" aria-live="polite">
+</div>
+<details>
+<summary class="hint" style="cursor:pointer;margin-top:12px">手动粘贴 / 查看识别文字</summary>
+<label>标题<input id="newResumeTitle" placeholder="例如：Java 后端简历">
+</label>
+<label>简历内容<textarea id="newResumeContent" style="min-height:110px" placeholder="粘贴简历内容">
+</textarea>
+</label>
+<div id="resumeError" class="alert">
+</div>
+<button id="createResumeBtn" class="btn full">保存粘贴的简历</button>
+</details>
+</div>
+</details>
+<details id="newJobPanel" data-panel class="card panel ">
+<summary class="card-head">
+<h2>保存岗位 JD</h2>
+<span class="panel-meta hint">需要复用时再保存</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<label>岗位标题<input id="newJobTitle" placeholder="例如：Java 后端工程师">
+</label>
+<label>JD 内容<textarea id="newJobContent" style="min-height:90px" placeholder="粘贴岗位描述">
+</textarea>
+</label>
+<div id="jobError" class="alert">
+</div>
+<button id="createJobBtn" class="btn full">保存 JD</button>
+</div>
+</details>
+</aside>
+<section class="workspace-main">
+<details id="analysisPanel" data-panel class="card panel analysis" open>
+<summary class="card-head">
+<h2>简历分析</h2>
+<span class="panel-meta hint">
+<span id="agentMode">正在读取运行配置…</span>
+</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<p class="section-intro">选好简历，填写期望岗位。提供具体 JD，可以进一步看清已有证据与调整方向。</p>
+<div class="editor-grid">
+<label>期望岗位<input id="targetRole" maxlength="120" placeholder="例如：AI 应用开发工程师">
+</label>
+<label>已保存的岗位 JD<select id="analysisJobSelect" class="select">
+<option value="">使用下方粘贴的 JD / 检索岗位需求</option>
+</select>
+</label>
+</div>
+<label>岗位 JD（可选，选择已保存 JD 时优先使用所选内容）<textarea id="agentJobText" maxlength="3000" placeholder="粘贴招聘岗位的职责和要求；暂时没有也可以先分析简历方向。">
+</textarea>
+</label>
+<details class="inline-fold">
+<summary>更多岗位条件<span class="hint">城市 / 公司 / 经验</span>
+</summary>
+<div class="optional-grid">
+<label>城市（可选）<input id="targetCity" maxlength="80" placeholder="不限城市">
+</label>
+<label>公司（可选）<input id="targetCompany" maxlength="120" placeholder="不限公司">
+</label>
+<label>经验条件（可选）<input id="targetExperience" maxlength="80" placeholder="例如：应届 / 1–3 年">
+</label>
+</div>
+</details>
+<p id="searchHint" class="hint">填写期望岗位可生成初步调整方向；提供真实 JD 可进一步匹配。</p>
+<div class="toolbar">
+<button id="analyzeBtn" class="btn primary">运行岗位分析</button>
+<button id="reviewResumeBtn" class="btn">体检并分析岗位方向</button>
+<button id="cancelAgentBtn" class="btn" disabled>取消任务</button>
+</div>
+<div id="analysisError" class="alert" role="status" aria-live="polite">
+</div>
+<div id="analysisSummary" class="analysis-summary" hidden>
+</div>
+</div>
+</details>
+<div id="analysisResult" class="analysis-result">
+<div class="insight-grid">
+<details id="rolesPanel" data-panel class="card panel " open>
+<summary class="card-head">
+<h2>当前简历更适合的岗位</h2>
+<span class="panel-meta hint">从已有经历出发</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="rolesContent" class="empty-state">分析后会展示推荐方向、适合原因和简历原文依据。</div>
+</div>
+</details>
+<details id="targetPlanPanel" data-panel class="card panel " open>
+<summary class="card-head">
+<h2>向期望岗位调整的方向</h2>
+<span class="panel-meta hint">明确下一步</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="targetPlanContent" class="empty-state">填写期望岗位后，查看已有经历如何突出，以及后续需要补足的实践。</div><button id="startRevisionBtn" class="btn" style="margin-top:14px">按建议调整简历</button>
+</div>
+</details>
+</div>
+<details id="jdPanel" data-panel class="card panel " open>
+<summary class="card-head">
+<h2>与岗位 JD 对比</h2>
+<span class="panel-meta hint">已有证据 / 待核实要求</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="matchingContent" class="empty-state">提供岗位 JD 并运行分析后，查看文字覆盖、已有证据和待核实要求。没有 JD 时不计算匹配分数。</div>
+</div>
+</details>
+<details id="reviewPanel" data-panel class="card panel ">
+<summary class="card-head">
+<h2>简历体检与补充问题</h2>
+<span class="panel-meta hint">需要时展开</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="reviewContent" class="empty-state">分析后可展开查看结构线索、表达建议、核实问题及检索来源。</div>
+</div>
+</details>
+<details id="draftPanel" data-panel class="card panel ">
+<summary class="card-head">
+<h2>岗位调整草稿</h2>
+<span class="panel-meta hint">检查后再保存</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="draftContent" class="empty-state">结合 JD 分析后生成原文排序草稿，核实后可另存新版本。</div>
+<button id="useDraftBtn" class="btn" disabled>将草稿载入新版本编辑器</button>
+</div>
+</details>
+<details id="tracePanel" data-panel class="card panel ">
+<summary class="card-head">
+<h2>分析执行记录</h2>
+<span class="panel-meta hint">进度 / 模型用量</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="traceContent" class="empty-state">运行分析后可查看执行进度和模型用量。</div>
+</div>
+</details>
+</div>
+<div class="section-divider">
+<span>简历版本与历史</span>
+<span class="hint">编辑和管理时再展开</span>
+</div>
+<details id="versionsPanel" data-panel class="card panel ">
+<summary class="card-head">
+<h2>版本时间线</h2>
+<span class="panel-meta hint">
+<span id="versionHint">请先选择简历</span>
+</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="versions" class="versions">
+<div class="empty hint">选择左侧简历后查看版本</div>
+</div>
+</div>
+</details>
+<details id="editorPanel" data-panel class="card panel editor">
+<summary class="card-head">
+<h2>
+<span id="editorTitle">新建简历版本</span>
+</h2>
+<span class="panel-meta hint">内容最多 6000 字符</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div class="editor-grid">
+<div>
+<label>版本名称<input id="versionName" maxlength="160" placeholder="例如：Java 后端岗位定制版">
+</label>
+<label>目标 JD<select id="jobSelect" class="select">
+<option value="">不绑定目标 JD</option>
+</select>
+</label>
+<label>关联分析任务<input id="taskId" type="number" min="1" placeholder="运行分析后自动填充">
+</label>
+</div>
+<div>
+<label>版本来源<select id="versionSource" class="select">
+<option value="MANUAL">手动编辑</option>
+<option value="AI_OPTIMIZED">AI 优化</option>
+<option value="JOB_TARGETED">岗位定制</option>
+</select>
+</label>
+<label>版本内容<textarea id="versionContent" maxlength="6000" placeholder="编辑此版本的简历内容">
+</textarea>
+</label>
+</div>
+</div>
+<div id="versionError" class="alert">
+</div>
+<div class="analysis-actions">
+<button id="newVersionBtn" class="btn">清空新建</button>
+<button id="saveVersionBtn" class="btn">保存版本</button><button id="saveAndGenerateBtn" class="btn primary">另存新版本并预览简历</button>
+</div>
+</div>
+</details>
+<details id="documentPanel" data-panel class="card panel">
+<summary class="card-head"><h2>生成与下载简历</h2><span class="panel-meta hint">A4 / PDF</span><span class="fold-indicator" aria-hidden="true"></span></summary>
+<div class="body"><p class="section-intro">选择已保存版本生成 PDF。正文来自该版本，不会再次改写；编辑器中的修改请先保存。求职意向采用下方本次选择。</p>
+<div class="editor-grid"><label>简历版本<select id="documentVersion" class="select"><option value="">请先选择简历</option></select></label><label>求职意向（可选）<input id="documentTarget" maxlength="120" placeholder="例如：Java 后端开发工程师"></label></div>
+<div class="toolbar"><button id="previewDocumentBtn" class="btn primary">生成并预览 PDF</button><button id="downloadDocumentBtn" class="btn" disabled>下载 PDF 简历</button><button id="reviseSelectedBtn" class="btn">复制此版本继续调整</button></div><div id="documentStatus" class="alert" role="status" aria-live="polite"></div>
+<div id="documentPreview" hidden><p class="hint">这是所选版本的生成结果。下载前请核实文字和分页。</p><iframe id="resumePdfFrame" class="pdf-frame" title="生成的 PDF 简历预览"></iframe></div></div></details>
+<details id="comparePanel" data-panel class="card panel compare">
+<summary class="card-head">
+<h2>简历版本对比</h2>
+<span class="panel-meta hint">按非空行统计变化</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div class="toolbar">
+<select id="fromVersion" class="select">
+<option value="">基准版本</option>
+</select>
+<span class="hint">→</span>
+<select id="toVersion" class="select">
+<option value="">目标版本</option>
+</select>
+<button id="compareBtn" class="btn">开始对比</button>
+</div>
+<div id="compareResult" class="compare-result">
+</div>
+</div>
+</details>
+<details id="reportsPanel" data-panel class="card panel reports">
+<summary class="card-head">
+<h2>历史分析报告</h2>
+<span class="panel-meta hint">
+<span id="reportHint">暂无报告</span>
+</span>
+<span class="fold-indicator" aria-hidden="true">
+</span>
+</summary>
+<div class="body">
+<div id="reports">
+<div class="hint">暂无报告</div>
+</div>
+</div>
+</details>
+</section>
+</div>
+</main>
   <script>
     const state={token:localStorage.getItem('resume-fit-user-token')||'',resumes:[],jobs:[],versions:[],editingId:null,authMode:'login'};const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));const num=v=>Number(v||0).toLocaleString('zh-CN');
-    async function request(url,options={}){const response=await fetch(url,{...options,headers:{'Content-Type':'application/json',...(options.headers||{}),...(state.token?{Authorization:'Bearer '+state.token}:{})}});if(response.status===401||response.status===403){logout(false);throw new Error('登录已失效或没有访问权限');}const payload=await response.json();if(!response.ok||payload.success===false)throw new Error(payload.message||'请求失败');return payload.data}
-    function logout(clear=true){state.token='';localStorage.removeItem('resume-fit-user-token');$('login').classList.remove('hidden');if(clear)$('loginError').textContent=''}
+
+    const panelStorageKey='resume-fit-workspace-panels-v1';
+    function rememberPanel(panel){try{const saved=JSON.parse(localStorage.getItem(panelStorageKey)||'{}');saved[panel.id]=panel.open;localStorage.setItem(panelStorageKey,JSON.stringify(saved))}catch{}}
+    function openPanel(id,scroll=false){const panel=$(id);if(!panel)return;panel.open=true;rememberPanel(panel);if(scroll)panel.scrollIntoView({behavior:'smooth',block:'start'})}
+    function setupPanels(){let saved={};try{saved=JSON.parse(localStorage.getItem(panelStorageKey)||'{}')||{}}catch{}document.querySelectorAll('details[data-panel]').forEach(panel=>{if(typeof saved[panel.id]==='boolean')panel.open=saved[panel.id];panel.addEventListener('toggle',()=>rememberPanel(panel))})}
+    function resetAnalysisPanels(){
+      $('analysisSummary').hidden=true;
+      for(const id of ['rolesContent','targetPlanContent','matchingContent','reviewContent','draftContent','traceContent']){$(id).textContent='正在分析，完成后在这里展示结果…';$(id).classList.add('empty-state')}
+    }
+    async function request(url,options={}){const response=await fetch(url,{...options,headers:{...(options.body instanceof FormData?{}:{'Content-Type':'application/json'}),...(options.headers||{}),...(state.token?{Authorization:'Bearer '+state.token}:{})}});if(response.status===401||response.status===403){logout(false);throw new Error('登录已失效或没有访问权限');}const payload=await response.json();if(!response.ok||payload.success===false)throw new Error(payload.message||'请求失败');return payload.data}
+    function logout(clear=true){invalidateDocument();state.token='';localStorage.removeItem('resume-fit-user-token');$('login').classList.remove('hidden');if(clear)$('loginError').textContent=''}
     function setAuthMode(mode){state.authMode=mode;$('login').classList.toggle('register-mode',mode==='register');$('authTitle').textContent=mode==='register'?'创建工作台账号':'简历版本工作台';$('authHint').textContent=mode==='register'?'注册后即可保存简历版本、分析报告和分享链接。':'登录后管理原始版、岗位定制版和公开分享版本。';$('authSubmit').textContent=mode==='register'?'注册并进入工作台':'登录工作台';$('authToggle').textContent=mode==='register'?'已有账号？返回登录':'首次使用？注册账号';$('loginError').textContent=''}
     $('authToggle').onclick=()=>setAuthMode(state.authMode==='login'?'register':'login');$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginError').textContent=state.authMode==='register'?'注册中…':'登录中…';try{const body={username:$('username').value.trim(),password:$('password').value};if(state.authMode==='register')body.displayName=$('displayName').value.trim();const data=await request(state.authMode==='register'?'/api/auth/register':'/api/auth/login',{method:'POST',body:JSON.stringify(body)});state.token=data.token;localStorage.setItem('resume-fit-user-token',state.token);$('login').classList.add('hidden');await loadBase()}catch(error){$('loginError').textContent=error.message}});$('logoutBtn').onclick=()=>logout();$('refreshBtn').onclick=loadBase;
-    async function loadBase(){try{const [resumes,jobs]=await Promise.all([request('/api/resumes'),request('/api/jobs')]);state.resumes=resumes||[];state.jobs=jobs||[];renderBase();if(state.resumes.length){if(!state.selectedResumeId||!state.resumes.some(x=>x.id===state.selectedResumeId))state.selectedResumeId=state.resumes[0].id;await loadResume()}else{state.versions=[];renderVersions()}}catch(error){if(state.token)alert(error.message)}}
-    function renderBase(){$('resumeCount').textContent=state.resumes.length+' 份';$('resumeList').innerHTML=state.resumes.length?state.resumes.map(item=>`<button class="resume-item ${item.id===state.selectedResumeId?'active':''}" onclick="selectResume(${item.id})">${esc(item.title)}<small>${esc(item.sourceFileName||'手动创建')}</small></button>`).join(''):'<div class="hint">还没有简历</div>';const options='<option value="">不绑定目标 JD</option>'+state.jobs.map(job=>`<option value="${job.id}">${esc(job.title)}</option>`).join('');$('jobSelect').innerHTML=options;$('analysisJobSelect').innerHTML='<option value="">选择目标 JD</option>'+state.jobs.map(job=>`<option value="${job.id}">${esc(job.title)}</option>`).join('')}
-    window.selectResume=async id=>{state.selectedResumeId=id;renderBase();await loadResume()};async function loadResume(){if(!state.selectedResumeId)return;try{const [versions,reports]=await Promise.all([request(`/api/resumes/${state.selectedResumeId}/versions`),request(`/api/resumes/${state.selectedResumeId}/reports`)]);state.versions=versions||[];state.reports=reports||[];renderVersions();renderReports()}catch(error){alert(error.message)}}
-    function renderVersions(){ $('versionHint').textContent=state.versions.length?`${state.versions.length} 个版本`:'暂无版本';$('versions').innerHTML=state.versions.length?state.versions.map(v=>`<div class="version"><div><div class="version-title">v${v.versionNo} · ${esc(v.title)}</div><div class="version-meta"><span>${esc(v.source)}</span><span>${num(v.viewCount)} 次访问</span><span>${new Date(v.createdAt).toLocaleString('zh-CN',{hour12:false})}</span>${v.published?'<span class="published">● 已发布</span>':''}</div></div><div class="version-actions"><button class="mini" onclick="editVersion(${v.id})">编辑</button><button class="mini" onclick="publishVersion(${v.id},${v.published})">${v.published?'取消发布':'发布'}</button></div></div>`).join(''):'<div class="empty hint">暂无版本，请从右侧新建</div>';const opts='<option value="">基准版本</option>'+state.versions.map(v=>`<option value="${v.id}">v${v.versionNo} · ${esc(v.title)}</option>`).join('');$('fromVersion').innerHTML=opts;$('toVersion').innerHTML=opts}
-    function renderReports(){const reports=state.reports||[];$('reportHint').textContent=reports.length?`${reports.length} 份报告`:'暂无报告';$('reports').innerHTML=reports.length?reports.map(r=>`<div class="report-item"><strong>任务 #${r.taskId} · ${r.score} 分</strong><span class="hint">　${new Date(r.createdAt).toLocaleString('zh-CN',{hour12:false})}</span><div style="margin-top:5px;color:#aebbd5">${esc(r.report?.summary||'无摘要')}</div></div>`).join(''):'<div class="hint">暂无分析报告，先运行一次 Agent 分析</div>'}
-    window.editVersion=id=>{const v=state.versions.find(x=>x.id===id);if(!v)return;state.editingId=id;$('editorTitle').textContent=`编辑 v${v.versionNo}`;$('versionName').value=v.title;$('versionContent').value=v.content;$('versionSource').value=v.source||'MANUAL';$('jobSelect').value=v.targetJobId||'';$('taskId').value=v.analysisTaskId||'';window.scrollTo({top:document.querySelector('.editor').offsetTop-15,behavior:'smooth'})};
+    async function loadBase(){try{const [resumes,jobs,config]=await Promise.all([request('/api/resumes'),request('/api/jobs'),request('/api/analysis/tasks/capabilities')]);state.resumes=resumes||[];state.jobs=jobs||[];state.agentConfig=config;$('agentMode').textContent=config.demo?'Demo · 离线模型演示':config.model+' · 真实模型';$('searchHint').textContent=config.searchAvailable?'已配置搜索。来源摘要不保证当前在招，请核实完整 JD。':'未配置搜索服务：填写期望岗位可生成初步调整方向；选择或粘贴真实 JD 后可细化岗位要求与差距。';renderBase();if(state.resumes.length){if(!state.selectedResumeId||!state.resumes.some(x=>x.id===state.selectedResumeId))state.selectedResumeId=state.resumes[0].id;await loadResume()}else{state.versions=[];renderVersions()}}catch(error){if(state.token)alert(error.message)}}
+    function renderBase(){$('resumeCount').textContent=state.resumes.length+' 份';$('resumeList').innerHTML=state.resumes.length?state.resumes.map(item=>`<button class="resume-item ${item.id===state.selectedResumeId?'active':''}" onclick="selectResume(${item.id})">${esc(item.title)}<small>${esc(item.sourceFileName||'手动创建')}</small></button>`).join(''):'<div class="hint">还没有简历</div>';const options='<option value="">不绑定目标 JD</option>'+state.jobs.map(job=>`<option value="${job.id}">${esc(job.title)}</option>`).join('');$('jobSelect').innerHTML=options;$('analysisJobSelect').innerHTML='<option value="">使用粘贴的 JD / 检索岗位需求</option>'+state.jobs.map(job=>`<option value="${job.id}">${esc(job.title)}</option>`).join('')}
+    window.selectResume=async id=>{state.selectedResumeId=id;renderBase();await loadResume()};async function loadResume(){
+      const resumeId=state.selectedResumeId;if(!resumeId)return;
+      invalidateDocument();
+      try{const [versions,reports]=await Promise.all([request(`/api/resumes/${resumeId}/versions`),request(`/api/resumes/${resumeId}/reports`)]);if(resumeId!==state.selectedResumeId)return;state.versions=versions||[];state.reports=reports||[];renderVersions();renderReports()}catch(error){if(resumeId===state.selectedResumeId)alert(error.message)}
+    }
+    function renderVersions(){ $('versionHint').textContent=state.versions.length?`${state.versions.length} 个版本`:'暂无版本';$('versions').innerHTML=state.versions.length?state.versions.map(v=>`<div class="version"><div><div class="version-title">v${v.versionNo} · ${esc(v.title)}</div><div class="version-meta"><span>${esc(v.source)}</span><span>${num(v.viewCount)} 次访问</span><span>${new Date(v.createdAt).toLocaleString('zh-CN',{hour12:false})}</span>${v.published?'<span class="published">● 已发布</span>':''}</div></div><div class="version-actions"><button class="mini" onclick="editVersion(${v.id})">编辑</button><button class="mini" onclick="publishVersion(${v.id},${v.published})">${v.published?'取消发布':'发布'}</button></div></div>`).join(''):'<div class="empty hint">暂无版本，请从右侧新建</div>';renderDocumentVersions();const opts='<option value="">基准版本</option>'+state.versions.map(v=>`<option value="${v.id}">v${v.versionNo} · ${esc(v.title)}</option>`).join('');$('fromVersion').innerHTML=opts;$('toVersion').innerHTML=opts}
+    function renderReports(){const reports=state.reports||[];$('reportHint').textContent=reports.length?`${reports.length} 份报告`:'暂无报告';$('reports').innerHTML=reports.length?reports.map(r=>`<div class="report-item"><strong>任务 #${r.taskId} · ${r.report?.analysisType==='RESUME_REVIEW'?'简历体检':esc(r.score)+'% 关键词覆盖率'}</strong><span class="hint">　${new Date(r.createdAt).toLocaleString('zh-CN',{hour12:false})}</span><div style="margin-top:5px;color:#aebbd5">${esc(r.report?.summary||'无摘要')}</div><button class="mini" style="margin-top:8px" onclick="viewReport(${r.taskId})">查看完整报告</button></div>`).join(''):'<div class="hint">暂无分析报告，先运行一次 Agent 分析</div>'}
+    window.viewReport=async taskId=>{try{const task=await request('/api/analysis/tasks/'+taskId);if(task.result){renderAnalysis(task.result);openPanel('analysisPanel',true)}}catch(error){$('analysisError').textContent=error.message}};
+    window.editVersion=id=>{const v=state.versions.find(x=>x.id===id);if(!v)return;state.editingId=id;$('editorTitle').textContent=`编辑 v${v.versionNo}`;$('versionName').value=v.title;$('versionContent').value=v.content;$('versionSource').value=['MANUAL','AI_OPTIMIZED','JOB_TARGETED'].includes(v.source)?v.source:'MANUAL';$('jobSelect').value=v.targetJobId||'';$('taskId').value=v.analysisTaskId||'';openPanel('editorPanel',true)};
     window.publishVersion=async(id,published)=>{try{const data=await request(`/api/resumes/${state.selectedResumeId}/versions/${id}/publish`,{method:published?'DELETE':'POST'});if(!published){const url=location.origin+'/share.html?token='+data.sharePath.split('/').pop();await navigator.clipboard?.writeText(url);alert('已发布，分享链接已复制：\n'+url)}await loadResume()}catch(error){alert(error.message)}};
     $('newVersionBtn').onclick=()=>{state.editingId=null;$('editorTitle').textContent='新建简历版本';$('versionName').value='';$('versionContent').value='';$('versionSource').value='MANUAL';$('jobSelect').value='';$('taskId').value='';$('versionError').textContent=''};
     $('saveVersionBtn').onclick=async()=>{if(!state.selectedResumeId)return $('versionError').textContent='请先选择简历';const body={title:$('versionName').value.trim(),content:$('versionContent').value.trim()};if(!body.title||!body.content)return $('versionError').textContent='版本名称和内容不能为空';body.source=$('versionSource').value;body.targetJobId=$('jobSelect').value?Number($('jobSelect').value):null;body.analysisTaskId=$('taskId').value?Number($('taskId').value):null;try{await request(state.editingId?`/api/resumes/${state.selectedResumeId}/versions/${state.editingId}`:`/api/resumes/${state.selectedResumeId}/versions`,{method:state.editingId?'PUT':'POST',body:JSON.stringify(body)});$('versionError').textContent='保存成功';$('newVersionBtn').click();await loadResume()}catch(error){$('versionError').textContent=error.message}};
     $('createResumeBtn').onclick=async()=>{const title=$('newResumeTitle').value.trim(),content=$('newResumeContent').value.trim();if(!title||!content)return $('resumeError').textContent='标题和内容不能为空';try{const data=await request('/api/resumes',{method:'POST',body:JSON.stringify({title,content,sourceFileName:'workspace.txt'})});$('newResumeTitle').value='';$('newResumeContent').value='';$('resumeError').textContent='保存成功';state.selectedResumeId=data.id;await loadBase()}catch(error){$('resumeError').textContent=error.message}};
     $('createJobBtn').onclick=async()=>{const title=$('newJobTitle').value.trim(),content=$('newJobContent').value.trim();if(!title||!content)return $('jobError').textContent='岗位标题和 JD 内容不能为空';try{await request('/api/jobs',{method:'POST',body:JSON.stringify({title,content})});$('newJobTitle').value='';$('newJobContent').value='';$('jobError').textContent='保存成功';await loadBase()}catch(error){$('jobError').textContent=error.message}};
-    $('analyzeBtn').onclick=async()=>{const jobId=Number($('analysisJobSelect').value);if(!state.selectedResumeId||!jobId)return $('analysisError').textContent='请先选择简历和目标 JD';$('analysisError').textContent='Agent 正在执行…';try{const task=await request('/api/analysis/tasks',{method:'POST',body:JSON.stringify({resumeId:state.selectedResumeId,jobId})});let current;for(let i=0;i<30;i++){await new Promise(r=>setTimeout(r,250));current=await request(`/api/analysis/tasks/${task.id}`);if(['SUCCEEDED','FAILED','CANCELLED'].includes(current.status))break}if(current.status!=='SUCCEEDED')throw new Error(current.errorMessage||'分析未成功完成');$('taskId').value=current.id;renderAnalysis(current.result);$('analysisError').textContent='分析完成，可编辑内容后保存为新版本';await loadResume()}catch(error){$('analysisError').textContent=error.message}};
-    function renderAnalysis(result){const matching=result.matching||{};const trace=result.agentTrace||[];$('analysisResult').classList.add('show');$('analysisResult').innerHTML=`<div class="score">${result.score??'—'}<span style="font-size:15px;color:var(--muted)"> / 100</span></div><div class="summary">${esc(result.summary||'暂无总结')}</div><div class="hint">关键词覆盖率：${matching.coverage??0}%</div><div class="chips" style="margin-top:8px">${(matching.matchedKeywords||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')}${(matching.missingKeywords||[]).map(x=>`<span class="chip missing">缺：${esc(x)}</span>`).join('')}</div><div class="trace">${trace.map((x,i)=>`<div class="trace-item"><b>STEP 0${i+1}</b><span>${esc(x.name)}</span><span style="color:var(--muted)">${esc(x.message)}</span></div>`).join('')}</div>`}
+    function analysisInput(resumeId){return {resumeId,jobId:Number($('analysisJobSelect').value)||null,targetRole:$('targetRole').value.trim(),city:$('targetCity').value.trim(),company:$('targetCompany').value.trim(),experience:$('targetExperience').value.trim(),jobDescription:$('agentJobText').value.trim()}}
+    async function runAgent(body){
+      if(state.running)throw new Error('已有分析正在运行，请等待完成或取消');
+      state.running=true;state.draft=null;$('analyzeBtn').disabled=true;$('importResumeBtn').disabled=true;$('reviewResumeBtn').disabled=true;$('useDraftBtn').disabled=true;
+      $('analysisError').textContent=body.resumeOnly?'正在创建简历体检任务…':'正在创建岗位分析任务…';
+      resetAnalysisPanels();openPanel('analysisPanel');
+      try{
+        const task=await request('/api/analysis/tasks',{method:'POST',body:JSON.stringify(body)});
+        state.activeTaskId=task.id;$('cancelAgentBtn').disabled=false;
+        openPanel('analysisPanel',true);
+        const deadline=Date.now()+((state.agentConfig?.timeoutSeconds||120)+25)*1000;
+        while(true){
+          const current=await request('/api/analysis/tasks/'+task.id);
+          if(current.result)renderAnalysis(current.result);
+          $('analysisError').textContent=current.message||current.status;
+          if(['SUCCEEDED','FAILED','CANCELLED','NEEDS_INPUT'].includes(current.status)){
+            state.activeTaskId=null;
+            if(current.status==='SUCCEEDED'){
+              state.draft={content:current.result.draftContent,resumeId:body.resumeId,jobId:body.jobId,taskId:task.id,title:body.targetRole||'岗位定制'};
+              $('useDraftBtn').disabled=!state.draft.content;
+              $('analysisError').textContent=body.resumeOnly?'简历体检与岗位方向分析完成。补充真实 JD 后可进一步细化调整建议。':'分析完成。请检查建议与草稿，再载入编辑器并另存新版本。';
+            }else $('analysisError').textContent=current.result?.summary||current.errorMessage||current.message;
+            if(state.selectedResumeId===body.resumeId)await loadResume();
+            return current;
+          }
+          if(Date.now()>deadline)throw new Error('任务 #'+task.id+' 仍未结束，可点击取消，稍后重试。');
+          await new Promise(r=>setTimeout(r,650));
+        }
+      }finally{state.running=false;$('analyzeBtn').disabled=false;$('importResumeBtn').disabled=false;$('reviewResumeBtn').disabled=false;$('cancelAgentBtn').disabled=!state.activeTaskId}
+    }
+    $('analyzeBtn').onclick=async()=>{
+      if(!state.selectedResumeId)return $('analysisError').textContent='请先导入或选择简历';
+      const body=analysisInput(state.selectedResumeId);
+      if(!body.jobId&&!body.targetRole&&!body.jobDescription)return $('analysisError').textContent='请补充目标岗位或 JD，也可以先点击“体检并分析岗位方向”。';
+      if(!body.jobId&&!body.jobDescription&&!state.agentConfig?.searchAvailable)body.resumeOnly=true;
+      try{await runAgent(body)}catch(error){$('analysisError').textContent=error.message}
+    };
+    $('reviewResumeBtn').onclick=async()=>{
+      if(!state.selectedResumeId)return $('analysisError').textContent='请先导入或选择简历';
+      try{await runAgent({...analysisInput(state.selectedResumeId),jobId:null,jobDescription:"",resumeOnly:true})}catch(error){$('analysisError').textContent=error.message}
+    };
+    $('resumeFile').onchange=()=>{
+      const file=$('resumeFile').files[0];
+      if(file){const title=file.name.replace(/\.[^.]+$/,'').slice(0,160);if(!$('newResumeTitle').value.trim()||$('newResumeTitle').value===state.importTitle)$('newResumeTitle').value=title;state.importTitle=title}
+      $('importStatus').textContent='';
+    };
+    $('importResumeBtn').onclick=async()=>{
+      if(state.importing||state.running)return;
+      const file=$('resumeFile').files[0];
+      if(!file)return $('importStatus').textContent='请先选择 PDF、Word 或 TXT 简历文件';
+      if(!/\.(pdf|docx?|txt)$/i.test(file.name))return $('importStatus').textContent='仅支持 PDF、DOC、DOCX 或 TXT';
+      if(file.size>5*1024*1024)return $('importStatus').textContent='文件不能超过 5MB';
+      if(!file.size)return $('importStatus').textContent='文件为空，请重新选择';
+      state.importing=true;$('importResumeBtn').disabled=true;$('analyzeBtn').disabled=true;$('reviewResumeBtn').disabled=true;
+      let saved=false;
+      try{
+        const form=new FormData();form.append('file',file);
+        $('importStatus').textContent='正在识别文件文字…';
+        const parsed=await request('/api/resumes/parse',{method:'POST',body:form});
+        $('newResumeContent').value=parsed.content;
+        const input=analysisInput(null); // 保存之前固定本次岗位条件，刷新列表不会丢失选择。
+        const resume=await request('/api/resumes',{method:'POST',body:JSON.stringify({title:($('newResumeTitle').value.trim()||file.name.replace(/\.[^.]+$/,'')).slice(0,160),content:parsed.content,sourceFileName:file.name.slice(0,255)})});
+        saved=true;state.selectedResumeId=resume.id;
+        $('importStatus').textContent='已识别 '+parsed.characterCount+' 字符并保存原始版，正在自动分析…';
+        await loadBase();
+        const hasJd=!!(input.jobId||input.jobDescription);
+        const task=await runAgent(hasJd?{...input,resumeId:resume.id}:{...input,resumeId:resume.id,resumeOnly:true});
+        $('importStatus').textContent=task.status==='SUCCEEDED'?'导入完成，分析结果已生成。':'简历已保存；'+(task.result?.summary||task.errorMessage||task.message);
+      }catch(error){$('importStatus').textContent=(saved?'简历已保存，自动分析未完成；可点击“体检并分析岗位方向”重试。':'导入未完成，未创建简历。')+' '+error.message}
+      finally{state.importing=false;$('importResumeBtn').disabled=false;$('analyzeBtn').disabled=!!state.running;$('reviewResumeBtn').disabled=!!state.running}
+    };
+    $('cancelAgentBtn').onclick=async()=>{if(!state.activeTaskId)return;try{const task=await request(`/api/analysis/tasks/${state.activeTaskId}`,{method:'DELETE'});$('analysisError').textContent=task.message;$('cancelAgentBtn').disabled=true}catch(error){$('analysisError').textContent=error.message}};
+    $('useDraftBtn').onclick=async()=>{const draft=state.draft;if(!draft?.content)return;if(state.selectedResumeId!==draft.resumeId){state.selectedResumeId=draft.resumeId;renderBase();await loadResume()}$('newVersionBtn').click();$('versionName').value=draft.title+' · 待核实草稿';$('versionContent').value=draft.content;$('versionSource').value='JOB_TARGETED';$('jobSelect').value=draft.jobId||'';$('taskId').value=draft.taskId;$('versionError').textContent='这是未保存的原文排序草稿。请检查段落关系和事实，再点击“保存版本”另存。';openPanel('editorPanel',true)};
+    function renderResumeReview(review){
+      if(!review||!Object.keys(review).length)return '';
+      return '<h3>简历结构与原文线索</h3>'+review.sections.map(s=>'<div class="report-item"><b>'+esc(s.name)+'</b> · '+(s.found?'已识别线索':'待核实')+'<p class="hint">'+esc(s.quote||'未识别到明确文字，请核实是否完整导入。')+'</p></div>').join('')+'<h3>体检建议</h3>'+review.observations.map(s=>'<p>'+esc(s)+'</p>').join('')+'<div class="chips">'+review.technicalKeywords.map(k=>'<span class="chip">原文提到：'+esc(k)+'</span>').join('')+'<p class="hint">'+esc(review.notice)+'</p>';
+    }
+    function renderCareerAdvice(advice,completed){
+      if(!advice){const empty='<p class="hint">'+(completed?'此报告尚无岗位方向分析，重新分析可生成。':'分析完成后展示结果。')+'</p>';return {roles:empty,target:empty}}
+      const roles=Array.isArray(advice.recommendedRoles)?advice.recommendedRoles:[],plan=advice.targetPlan||{},steps=Array.isArray(plan.priorities)?plan.priorities:[];
+      const quoteHtml=quotes=>(Array.isArray(quotes)?quotes:[]).map(q=>'<blockquote class="career-quote">'+esc(q)+'</blockquote>').join('');
+      const basis={NONE:'未填写期望岗位',ROLE_ONLY:'仅按岗位名称初步分析',USER_JD:'结合所提供的 JD',SEARCH_EXCERPT:'结合搜索摘要，需核实'};
+      const categories={HIGHLIGHT:'突出已有经历',VERIFY:'先核实再补充',LEARN:'后续学习与实践'};
+      const recommended='<p class="hint">'+esc(advice.recommendationNotice)+'</p>'+(roles.length?'<div class="career-grid">'+roles.map((r,i)=>'<article class="career-card"><span class="career-tag">'+(i===0?'优先考虑':'可考虑')+'</span><h4>'+esc(r.title)+'</h4><p>'+esc(r.reason)+'</p><div class="hint">简历原文依据</div>'+quoteHtml(r.evidence)+(r.uncertainties||[]).map(q=>'<p class="hint">待核实：'+esc(q)+'</p>').join('')+'</article>').join('')+'</div>':'<p class="hint">原文证据不足，暂不强行推荐。可以补充真实项目、工作职责和技能使用情况后重新分析。</p>');
+      const target='<div class="career-target">'+esc(plan.targetRole||'请填写上方期望岗位，然后重新分析')+'</div><p class="hint">'+esc(basis[plan.basis]||'初步方向')+' · '+esc(plan.notice)+'</p>'+(steps.length?steps.map(p=>'<article class="career-step"><span class="career-tag">'+esc(categories[p.category]||'待核实建议')+'</span><h4>'+esc(p.title)+'</h4><p>'+esc(p.action)+'</p>'+quoteHtml(p.evidence)+'</article>').join(''):plan.targetRole?'<p class="hint">本次未生成有充分依据的具体调整步骤，可补充真实 JD 和项目细节后重新分析。</p>':'')+(plan.questions||[]).map(q=>'<p class="hint">需要补充：'+esc(q)+'</p>').join('')+(advice.omittedUnsupportedItems?'<p class="hint">部分建议缺少可核对的简历原文依据，已省略。</p>':'');
+      return {roles:recommended,target};
+    }
+    function safeSourceUrl(value){try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password?url.href:null}catch{return null}}
+    function renderAnalysis(result){
+      const matching=result.matching||{},trace=result.agentTrace||[],usage=result.usage||{};
+      $('analysisSummary').hidden=!result.summary;$('analysisSummary').textContent=result.summary||'';
+      const career=renderCareerAdvice(result.careerAdvice,result.termination==='COMPLETED');
+      $('rolesContent').innerHTML=career.roles;$('targetPlanContent').innerHTML=career.target;
+      const hasMatch=result.analysisType!=='RESUME_REVIEW'&&Object.keys(matching).length>0;
+      $('matchingContent').innerHTML=hasMatch?`${result.score===undefined?'':`<div class="score">${esc(result.score)}%<small>关键词文字覆盖率</small></div>`}<p class="hint">${esc(result.scoreMeaning||'不代表能力评分或录用概率')}</p><div class="chips">${(matching.matchedKeywords||[]).map(x=>`<span class="chip">已有文字：${esc(x)}</span>`).join('')}${(matching.missingKeywords||[]).map(x=>`<span class="chip missing">待核实：${esc(x)}</span>`).join('')}</div>${(result.evidence||[]).map(x=>`<p class="hint"><b>${esc(x.keyword)}</b>：${esc(x.quote)}</p>`).join('')}`:`<p class="hint">${result.analysisType==='RESUME_REVIEW'?'本次未使用岗位 JD，不计算岗位匹配分数。可在上方提供真实 JD 后重新分析，细化已有证据与待核实要求。':result.termination?esc(result.summary||'本次没有可用的 JD 对比结果。'):'正在执行，岗位 JD 对比结果尚未生成。'}</p>`;
+      $('reviewContent').innerHTML=renderResumeReview(result.resumeReview)+((result.sources||[]).length?'<h3>检索来源（摘要，需核实完整 JD）</h3>':'')+(result.sources||[]).map(x=>{const url=safeSourceUrl(x.url);return `<div class="report-item">${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--cyan)">${esc(x.title)}</a>`:esc(x.title)}<div class="hint">${esc(x.kind)} · ${esc(x.retrievedAt)}</div><p>${esc(x.excerpt)}</p></div>`}).join('')+((result.interviewQuestions||[]).length?'<h3>核实与面试问题</h3>':'')+(result.interviewQuestions||[]).map(q=>'<p>'+esc(q)+'</p>').join('')||'<p class="hint">本次暂无额外体检建议或核实问题。</p>';
+      $('draftContent').innerHTML=result.draftContent?'<p class="hint">这是原文排序草稿，尚未保存。请核实段落关系和事实，再载入编辑器另存。</p><pre>'+esc(result.draftContent)+'</pre>':'<p class="hint">本次未生成岗位调整草稿。提供 JD 后可分析并生成原文排序草稿。</p>';
+      $('traceContent').innerHTML='<div class="trace">'+trace.map(x=>'<div class="trace-item"><b>'+esc(x.status)+'</b><span>'+esc(x.name)+'</span><span class="hint">'+esc(x.message)+'</span></div>').join('')+'</div>'+(usage.modelRounds===undefined?'':'<p class="hint">结束原因：'+esc(result.termination)+' · 模型轮次 '+esc(usage.modelRounds)+' · 工具调用 '+esc(usage.toolCalls)+' · 模型报告输入/输出 token '+esc(usage.reportedInputTokens)+' / '+esc(usage.reportedOutputTokens)+(result.demo?'（离线 Demo，无模型费用）':'')+'</p>');
+      for(const id of ['rolesContent','targetPlanContent','matchingContent','reviewContent','draftContent','traceContent'])$(id).classList.remove('empty-state');
+    }
     $('compareBtn').onclick=async()=>{const from=$('fromVersion').value,to=$('toVersion').value;if(!from||!to)return $('compareResult').textContent='请选择两个版本';try{const data=await request(`/api/resumes/${state.selectedResumeId}/versions/compare?from=${from}&to=${to}`);$('compareResult').innerHTML=`从 <strong>v${data.from.versionNo}</strong> 到 <strong>v${data.to.versionNo}</strong>：共变化 <strong style="color:var(--cyan)">${data.changedLines}</strong> 行，新增 ${data.addedLines} 行，删除 ${data.removedLines} 行。`}catch(error){$('compareResult').textContent=error.message}};
+
+    function invalidateDocument(){state.documentEpoch=(state.documentEpoch||0)+1;if(state.documentUrl)URL.revokeObjectURL(state.documentUrl);state.documentUrl=null;state.documentResumeId=null;$('documentPreview').hidden=true;$('resumePdfFrame').removeAttribute('src');$('downloadDocumentBtn').disabled=true}
+    async function privateBlob(url){const response=await fetch(url,{headers:{Authorization:'Bearer '+state.token},cache:'no-store'});if(!response.ok){let message='文件读取失败';try{message=(await response.json()).message||message}catch{}throw new Error(message)}return response.blob()}
+    $('documentTarget').oninput=invalidateDocument;
+    function downloadUrl(url,name){const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove()}
+    function renderDocumentVersions(){const selected=$('documentVersion').value;invalidateDocument();$('documentVersion').innerHTML=state.versions.length?state.versions.map(v=>`<option value="${v.id}">v${v.versionNo} · ${esc(v.title)}</option>`).join(''):'<option value="">请先保存简历版本</option>';if(state.versions.some(v=>String(v.id)===selected))$('documentVersion').value=selected}
+    $('documentVersion').onchange=invalidateDocument;
+    function copyForRevision(version){if(!version)return;$('newVersionBtn').click();$('versionName').value=(version.title+' · 调整版').slice(0,160);$('versionContent').value=version.content;$('versionSource').value='MANUAL';$('jobSelect').value=version.targetJobId||'';$('versionError').textContent='已复制所选版本。请按建议修改内容，再另存为新版本并生成简历。';openPanel('editorPanel',true)}
+    $('startRevisionBtn').onclick=()=>{if(!state.selectedResumeId)return $('analysisError').textContent='请先导入或选择简历';copyForRevision(state.versions[0])};
+    $('reviseSelectedBtn').onclick=()=>copyForRevision(state.versions.find(v=>String(v.id)===$('documentVersion').value));
+    $('saveAndGenerateBtn').onclick=async()=>{
+      if(state.documentSaving)return;const resumeId=state.selectedResumeId;if(!resumeId)return $('versionError').textContent='请先选择简历';const title=$('versionName').value.trim(),content=$('versionContent').value.trim();if(!title||!content)return $('versionError').textContent='版本名称和内容不能为空';
+      state.documentSaving=true;$('saveAndGenerateBtn').disabled=true;
+      try{const saved=await request(`/api/resumes/${resumeId}/versions`,{method:'POST',body:JSON.stringify({title,content,source:$('versionSource').value||'MANUAL',targetJobId:Number($('jobSelect').value)||null,analysisTaskId:Number($('taskId').value)||null})});if(state.selectedResumeId!==resumeId)return;
+        await loadResume();$('documentVersion').value=saved.id;$('documentTarget').value=$('targetRole').value.trim();$('versionError').textContent='已另存为新版本，正在生成 PDF；原版本保留。';openPanel('documentPanel',true);await previewDocument();
+      }catch(error){$('versionError').textContent=error.message}finally{state.documentSaving=false;$('saveAndGenerateBtn').disabled=false}
+    };
+    async function previewDocument(){
+      if(state.documentBusy)return;const resumeId=state.selectedResumeId,versionId=$('documentVersion').value;if(!resumeId||!versionId)return $('documentStatus').textContent='请先选择已保存的简历版本';
+      state.documentBusy=true;$('previewDocumentBtn').disabled=true;invalidateDocument();$('documentStatus').textContent='正在排版并生成 PDF…';
+      const epoch=state.documentEpoch,token=state.token;const options={targetRole:$('documentTarget').value.trim()};
+      try{const query=new URLSearchParams({targetRole:options.targetRole});const blob=await privateBlob(`/api/resumes/${resumeId}/versions/${versionId}/document?${query}`);
+        if(epoch!==state.documentEpoch||token!==state.token||state.selectedResumeId!==resumeId||$('documentVersion').value!==versionId||$('documentTarget').value.trim()!==options.targetRole)return;
+        state.documentUrl=URL.createObjectURL(blob);state.documentResumeId=resumeId;state.documentVersionId=versionId;$('resumePdfFrame').src=state.documentUrl;$('documentPreview').hidden=false;$('downloadDocumentBtn').disabled=false;$('documentStatus').textContent='PDF 已生成。请检查预览后下载。';
+      }catch(error){$('documentStatus').textContent=error.message}finally{state.documentBusy=false;$('previewDocumentBtn').disabled=false}
+    }
+    $('previewDocumentBtn').onclick=previewDocument;
+    $('downloadDocumentBtn').onclick=()=>{if(state.documentUrl&&state.documentResumeId===state.selectedResumeId)downloadUrl(state.documentUrl,'简历-v'+state.documentVersionId+'.pdf')};
+    window.addEventListener('beforeunload',()=>{if(state.documentUrl)URL.revokeObjectURL(state.documentUrl)});
+
+    setupPanels();
     $('login').classList.toggle('hidden',Boolean(state.token));if(state.token)loadBase();
   </script>
 </body>

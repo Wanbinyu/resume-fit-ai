@@ -2,17 +2,13 @@ package com.wanbinyu.resumefit.ai;
 
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Deterministic tools used before the model call. They make the Agent workflow
- * inspectable and keep the Demo mode completely offline.
+ * 关键词匹配的确定性实现，由模型通过注册表按需调用。
  */
 @Component
 public class ResumeAgentTools {
@@ -30,12 +26,7 @@ public class ResumeAgentTools {
                 .filter(keyword -> !matched.contains(keyword))
                 .toList();
         int coverage = keywords.isEmpty() ? 0 : Math.round(matched.size() * 100.0f / keywords.size());
-        List<Map<String, Object>> trace = new ArrayList<>();
-        trace.add(step("extract_job_keywords", "从 JD 提取技术关键词", keywords.size()));
-        trace.add(step("match_resume_evidence", "在简历中检索已有证据", matched.size()));
-        trace.add(step("calculate_coverage", "计算关键词覆盖率", coverage));
-        trace.add(step("guard_fabrication", "开启事实约束，禁止补写未出现的经历", true));
-        return new AgentContext(keywords, matched, missing, coverage, trace);
+        return new AgentContext(keywords, matched, missing, coverage, List.of());
     }
 
     private List<String> extractJobKeywords(String jobDescription) {
@@ -47,16 +38,8 @@ public class ResumeAgentTools {
     }
 
     private boolean containsIgnoreCase(String text, String keyword) {
-        return text.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
-    }
-
-    private Map<String, Object> step(String name, String message, Object output) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("name", name);
-        result.put("message", message);
-        result.put("output", output);
-        result.put("status", "SUCCEEDED");
-        return result;
+        return java.util.regex.Pattern.compile("(?<![A-Za-z0-9])" + java.util.regex.Pattern.quote(keyword)
+                + "(?![A-Za-z0-9])", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(text).find();
     }
 
     public record AgentContext(List<String> keywords, List<String> matchedKeywords,
