@@ -13,15 +13,16 @@ import com.wanbinyu.resumefit.resume.ResumeMapper;
 import com.wanbinyu.resumefit.user.UserEntity;
 import com.wanbinyu.resumefit.user.UserMapper;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/** 生成公开的数量、成功率和用量汇总，不返回简历正文和用户明细。 */
 @Service
 public class PublicOverviewService {
+
     private final UserMapper userMapper;
     private final ResumeMapper resumeMapper;
     private final JobDescriptionMapper jobMapper;
@@ -30,10 +31,15 @@ public class PublicOverviewService {
     private final AiProperties aiProperties;
     private final AiUsageService usageService;
 
-    public PublicOverviewService(UserMapper userMapper, ResumeMapper resumeMapper,
-                                 JobDescriptionMapper jobMapper, AnalysisTaskMapper taskMapper,
-                                 ResumeAccessLogService accessLogService, AiProperties aiProperties,
-                                 AiUsageService usageService) {
+    public PublicOverviewService(
+        UserMapper userMapper,
+        ResumeMapper resumeMapper,
+        JobDescriptionMapper jobMapper,
+        AnalysisTaskMapper taskMapper,
+        ResumeAccessLogService accessLogService,
+        AiProperties aiProperties,
+        AiUsageService usageService
+    ) {
         this.userMapper = userMapper;
         this.resumeMapper = resumeMapper;
         this.jobMapper = jobMapper;
@@ -45,7 +51,10 @@ public class PublicOverviewService {
 
     public Map<String, Object> overview() {
         List<AnalysisTaskEntity> tasks = taskMapper.selectList(new LambdaQueryWrapper<>());
-        long succeeded = tasks.stream().filter(task -> "SUCCEEDED".equals(task.getStatus())).count();
+        long succeeded = tasks
+            .stream()
+            .filter(task -> "SUCCEEDED".equals(task.getStatus()))
+            .count();
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("service", "Resume Fit AI");
         result.put("status", "UP");
@@ -55,7 +64,10 @@ public class PublicOverviewService {
         result.put("totalJobs", jobMapper.selectCount(new LambdaQueryWrapper<JobDescriptionEntity>()));
         result.put("totalAnalysisTasks", tasks.size());
         result.put("successfulAnalysisTasks", succeeded);
-        result.put("analysisSuccessRate", tasks.isEmpty() ? 0 : Math.round(succeeded * 10000.0 / tasks.size()) / 100.0);
+        result.put(
+            "analysisSuccessRate",
+            tasks.isEmpty() ? 0 : Math.round(succeeded * 10000.0 / tasks.size()) / 100.0
+        );
         result.put("totalResumeViews", accessLogService.count());
         result.put("todayResumeViews", accessLogService.countSince(LocalDate.now().atStartOfDay()));
         result.put("aiUsage", usageService.summary());

@@ -7,16 +7,19 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 import java.util.stream.Collectors;
 
+/** 将业务异常、参数校验异常和未预期错误转换为统一的 API 错误响应。 */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     ResponseEntity<ApiResponse<Void>> handleUploadSize() {
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(new ApiResponse<>(false, null, "文件不能超过 5MB，请选择较小的简历文件"));
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(
+            new ApiResponse<>(false, null, "文件不能超过 5MB，请选择较小的简历文件")
+        );
     }
+
     @ExceptionHandler(BusinessException.class)
     ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException exception) {
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, exception.getMessage()));
@@ -24,9 +27,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException exception) {
-        String message = exception.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.joining("；"));
+        String message = exception
+            .getBindingResult()
+            .getFieldErrors()
+            .stream()
+            .map(FieldError::getDefaultMessage)
+            .collect(Collectors.joining("；"));
         return ResponseEntity.badRequest().body(new ApiResponse<>(false, null, message));
     }
 
@@ -37,8 +43,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
     ResponseEntity<ApiResponse<Void>> handleNotFound() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiResponse<>(false, null, "请求的资源不存在"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            new ApiResponse<>(false, null, "请求的资源不存在")
+        );
     }
 
     @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
@@ -48,7 +55,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiResponse<Void>> handleUnknown(Exception exception) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiResponse<>(false, null, "服务暂时不可用，请稍后重试"));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            new ApiResponse<>(false, null, "服务暂时不可用，请稍后重试")
+        );
     }
 }

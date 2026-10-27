@@ -4,8 +4,16 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 public final class AnalysisReportDtos {
+
     private AnalysisReportDtos() {}
 
-    public record View(Long id, Long taskId, Long resumeId, Long jobId,
-                       Integer score, Map<String, Object> report, LocalDateTime createdAt) {}
+    public record View(
+        Long id,
+        Long taskId,
+        Long resumeId,
+        Long jobId,
+        Integer score,
+        Map<String, Object> report,
+        LocalDateTime createdAt
+    ) {}
 }

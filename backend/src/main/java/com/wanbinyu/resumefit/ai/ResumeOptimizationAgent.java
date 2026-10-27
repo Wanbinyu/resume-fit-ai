@@ -7,8 +7,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * 单次分析的多轮工具调用流程。
+ *
+ * <p>模型只提出调用请求，工具由本类交给注册表执行，再按原 call ID 回传结果。
+ * 本类同时包含运行控制、简历提示词和报告组装；新增工具主要在 AgentToolRegistry 中注册。
+ */
 @Service
 public class ResumeOptimizationAgent {
+
     private static final String SYSTEM_PROMPT = """
             你是严谨的简历岗位匹配助手。先 load_resume 和 read_job_description(sourceId=user)。
             如无用户 JD，按用户岗位条件 search_job_requirements，然后只读取返回的 sourceId。
@@ -49,24 +56,64 @@ public class ResumeOptimizationAgent {
     private final ResumeAgentTools evidence;
     private final JobSearchProvider search;
 
-    public ResumeOptimizationAgent(AiProvider provider, ObjectMapper json, AiProperties limits,
-                                   ResumeAgentTools evidence, JobSearchProvider search) {
-        this.provider = provider; this.json = json; this.limits = limits; this.evidence = evidence; this.search = search;
+    public ResumeOptimizationAgent(
+        AiProvider provider,
+        ObjectMapper json,
+        AiProperties limits,
+        ResumeAgentTools evidence,
+        JobSearchProvider search
+    ) {
+        this.provider = provider;
+        this.json = json;
+        this.limits = limits;
+        this.evidence = evidence;
+        this.search = search;
     }
+
+    /** 使用直接传入的文本运行分析，主要供不需要数据库任务的调用方使用。 */
     public Map<String, Object> analyze(String resume, String job) {
         return analyze(new AgentRun("", "", "", "", () -> resume, () -> job, () -> false, event -> {}));
     }
+
+    /** 运行一次任务；AgentRun 提供数据读取、取消检查和进度回调。 */
     public Map<String, Object> analyze(AgentRun run) {
         JobSearchProvider effectiveSearch = limits.demoMode()
-                ? (r, c, o, e) -> new JobSearchProvider.SearchResult("UNAVAILABLE", "离线 Demo 不访问搜索服务，请粘贴 JD。", List.of())
-                : search;
+            ? (r, c, o, e) ->
+                  new JobSearchProvider.SearchResult(
+                      "UNAVAILABLE",
+                      "离线 Demo 不访问搜索服务，请粘贴 JD。",
+                      List.of()
+                  )
+            : search;
+        // 1. 每个任务独立创建注册表和消息列表，Demo 模式不访问外部搜索。
         var registry = new AgentToolRegistry(json, run, evidence, effectiveSearch);
         List<Message> messages = new ArrayList<>();
-        messages.add(new SystemMessage((run.resumeOnly ? RESUME_REVIEW_PROMPT : SYSTEM_PROMPT) + CAREER_PROMPT));
-        messages.add(new UserMessage(registry.encode(Map.of("targetRole", run.role, "city", run.city,
-                "company", run.company, "experience", run.experience))));
-        int rounds = 0, calls = 0, reserved = 0, inputTokens = 0, outputTokens = 0;
-        String termination = "BUDGET_EXHAUSTED", summary = "已达到执行预算，请缩小输入或补充 JD 后重试。";
+        messages.add(
+            new SystemMessage((run.resumeOnly ? RESUME_REVIEW_PROMPT : SYSTEM_PROMPT) + CAREER_PROMPT)
+        );
+        messages.add(
+            new UserMessage(
+                registry.encode(
+                    Map.of(
+                        "targetRole",
+                        run.role,
+                        "city",
+                        run.city,
+                        "company",
+                        run.company,
+                        "experience",
+                        run.experience
+                    )
+                )
+            )
+        );
+        int rounds = 0,
+            calls = 0,
+            reserved = 0,
+            inputTokens = 0,
+            outputTokens = 0;
+        String termination = "BUDGET_EXHAUSTED",
+            summary = "已达到执行预算，请缩小输入或补充 JD 后重试。";
         String modelErrorCode = "";
         List<String> questions = List.of();
         com.fasterxml.jackson.databind.JsonNode rawCareer = json.createObjectNode();
@@ -75,140 +122,313 @@ public class ResumeOptimizationAgent {
         // 一个任务一个虚拟线程执行器；每次模型调用受超时和取消检查约束。
         var executor = Executors.newVirtualThreadPerTaskExecutor();
         try {
+            // 2. 每轮先检查执行边界，再发起一次模型请求；一轮可能包含多个工具调用。
             while (rounds < limits.maxSteps()) {
-                if (run.cancelled.getAsBoolean()) { termination = "CANCELLED"; summary = "任务已取消"; break; }
-                if (System.nanoTime() >= deadline) { termination = "TIMEOUT"; summary = "任务超时，请重试或粘贴 JD"; break; }
+                if (run.cancelled.getAsBoolean()) {
+                    termination = "CANCELLED";
+                    summary = "任务已取消";
+                    break;
+                }
+                if (System.nanoTime() >= deadline) {
+                    termination = "TIMEOUT";
+                    summary = "任务超时，请重试或粘贴 JD";
+                    break;
+                }
                 // UTF-8 字节数作为保守 token 上界，加上消息/schema 开销和最大输出预留。
                 int estimate = 512 + limits.maxOutputTokens();
-                for (var message : messages) estimate += registry.encode(message).getBytes(StandardCharsets.UTF_8).length;
-                for (var tool : registry.definitions()) estimate += registry.encode(tool.getToolDefinition()).getBytes(StandardCharsets.UTF_8).length;
+                for (var message : messages)
+                    estimate += registry.encode(message).getBytes(StandardCharsets.UTF_8).length;
+                for (var tool : registry.definitions())
+                    estimate += registry
+                        .encode(tool.getToolDefinition())
+                        .getBytes(StandardCharsets.UTF_8)
+                        .length;
                 if (reserved + estimate > limits.tokenBudget()) break;
-                reserved += estimate; rounds++;
+                reserved += estimate;
+                rounds++;
                 run.event("model", "RUNNING", "round-" + rounds, "模型第 " + rounds + " 轮");
                 var snapshot = List.copyOf(messages);
-                var future = executor.submit(() -> provider.turn(snapshot, registry.definitions(), limits.maxOutputTokens()));
+                // 将阻塞请求放到虚拟线程，以便当前线程定期检查取消和截止时间。
+                var future = executor.submit(() ->
+                    provider.turn(snapshot, registry.definitions(), limits.maxOutputTokens())
+                );
                 AiProvider.Turn turn;
-                long callDeadline = Math.min(deadline, System.nanoTime() + TimeUnit.SECONDS.toNanos(limits.callTimeoutSeconds()));
+                long callDeadline = Math.min(
+                    deadline,
+                    System.nanoTime() + TimeUnit.SECONDS.toNanos(limits.callTimeoutSeconds())
+                );
                 try {
                     while (true) {
                         if (run.cancelled.getAsBoolean()) throw new CancellationException();
                         if (System.nanoTime() >= callDeadline) throw new TimeoutException();
-                        try { turn = future.get(100, TimeUnit.MILLISECONDS); break; }
-                        catch (TimeoutException ignored) { /* 检查取消与截止时间 */ }
+                        try {
+                            turn = future.get(100, TimeUnit.MILLISECONDS);
+                            break;
+                        } catch (TimeoutException ignored) {
+                            /* 检查取消与截止时间 */
+                        }
                     }
                 } catch (CancellationException exception) {
-                    future.cancel(true); termination = "CANCELLED"; summary = "任务已取消"; break;
+                    future.cancel(true);
+                    termination = "CANCELLED";
+                    summary = "任务已取消";
+                    break;
                 } catch (TimeoutException exception) {
-                    future.cancel(true); termination = "TIMEOUT"; summary = "模型调用超时，请稍后重试"; break;
+                    future.cancel(true);
+                    termination = "TIMEOUT";
+                    summary = "模型调用超时，请稍后重试";
+                    break;
                 } catch (Exception exception) {
-                    future.cancel(true); termination = "MODEL_ERROR";
+                    future.cancel(true);
+                    termination = "MODEL_ERROR";
                     modelErrorCode = safeErrorCode(exception);
                     summary = switch (modelErrorCode) {
-                        case "HTTP_401", "HTTP_403" -> "模型服务鉴权失败，请检查本机 API 配置；简历已保留，可稍后重试。";
+                        case
+                            "HTTP_401",
+                            "HTTP_403" -> "模型服务鉴权失败，请检查本机 API 配置；简历已保留，可稍后重试。";
                         case "HTTP_402" -> "模型服务提示额度不足，请检查模型账户；简历已保留。";
                         case "HTTP_429" -> "模型服务请求受限，请稍后重试；简历已保留。";
                         default -> "模型调用失败，请检查服务端配置或稍后重试；简历已保留。";
                     };
                     break;
                 }
-                inputTokens += turn.inputTokens(); outputTokens += turn.outputTokens();
+                inputTokens += turn.inputTokens();
+                outputTokens += turn.outputTokens();
                 var assistant = turn.message();
-                if (assistant == null || (assistant.getText() != null && assistant.getText().length() > 14000)) {
-                    termination = "MODEL_ERROR"; summary = "模型返回为空或过大"; break;
+                if (
+                    assistant == null || (assistant.getText() != null && assistant.getText().length() > 14000)
+                ) {
+                    termination = "MODEL_ERROR";
+                    summary = "模型返回为空或过大";
+                    break;
                 }
-                run.event("model", "SUCCEEDED", "round-" + rounds, "模型返回 " + assistant.getToolCalls().size() + " 个工具调用");
+                run.event(
+                    "model",
+                    "SUCCEEDED",
+                    "round-" + rounds,
+                    "模型返回 " + assistant.getToolCalls().size() + " 个工具调用"
+                );
+                // 3. 没有工具请求时尝试解析最终报告；还要检查业务必需步骤是否已完成。
                 if (!assistant.hasToolCalls()) {
                     try {
                         var report = parseReport(assistant.getText());
-                        if (report == null || !report.isObject() || !report.path("summary").isTextual()) throw new IllegalArgumentException();
+                        if (
+                            report == null || !report.isObject() || !report.path("summary").isTextual()
+                        ) throw new IllegalArgumentException();
                         summary = report.path("summary").asText();
                         if (summary.length() > 6000) throw new IllegalArgumentException();
                         List<String> validQuestions = new ArrayList<>();
-                        if (report.path("interviewQuestions").isArray()) for (var q : report.path("interviewQuestions"))
-                            if (q.isTextual() && q.asText().length() <= 300 && validQuestions.size() < 8) validQuestions.add(q.asText());
+                        if (report.path("interviewQuestions").isArray()) for (var q : report.path(
+                            "interviewQuestions"
+                        ))
+                            if (
+                                q.isTextual() && q.asText().length() <= 300 && validQuestions.size() < 8
+                            ) validQuestions.add(q.asText());
                         questions = List.copyOf(validQuestions);
                         rawCareer = report.path("careerAdvice");
-                        termination = (run.resumeOnly ? !run.resumeReview.isEmpty() : run.matching != null && run.drafted) ? "COMPLETED" : "NEEDS_INPUT";
-                        if (termination.equals("NEEDS_INPUT")) summary = "需要补充或核实岗位 JD 后继续。" + summary;
-                    } catch (Exception exception) { termination = "INVALID_RESPONSE"; summary = "模型返回格式无法识别，请重试"; }
+                        termination = (
+                            run.resumeOnly ? !run.resumeReview.isEmpty() : run.matching != null && run.drafted
+                        )
+                            ? "COMPLETED"
+                            : "NEEDS_INPUT";
+                        if (termination.equals("NEEDS_INPUT")) summary =
+                            "需要补充或核实岗位 JD 后继续。" + summary;
+                    } catch (Exception exception) {
+                        termination = "INVALID_RESPONSE";
+                        summary = "模型返回格式无法识别，请重试";
+                    }
                     break;
                 }
                 if (calls + assistant.getToolCalls().size() > limits.maxToolCalls()) break;
+                // 4. 先记录调用请求，再逐个执行工具；当前实现按顺序等待，不并行调用工具。
                 messages.add(assistant); // 保留 assistant 原始 tool_calls 和每个 call ID。
                 List<ToolResponseMessage.ToolResponse> responses = new ArrayList<>();
                 for (var call : assistant.getToolCalls()) {
-                    if (call.id() == null || call.id().isBlank() || call.id().length() > 100
-                            || call.name() == null || call.name().length() > 80 || !callIds.add(call.id())) {
-                        termination = "INVALID_RESPONSE"; summary = "模型返回重复或无效的工具调用 ID"; break;
+                    if (
+                        call.id() == null ||
+                        call.id().isBlank() ||
+                        call.id().length() > 100 ||
+                        call.name() == null ||
+                        call.name().length() > 80 ||
+                        !callIds.add(call.id())
+                    ) {
+                        termination = "INVALID_RESPONSE";
+                        summary = "模型返回重复或无效的工具调用 ID";
+                        break;
                     }
-                    if (run.cancelled.getAsBoolean()) { termination = "CANCELLED"; summary = "任务已取消"; break; }
-                    if (System.nanoTime() >= deadline) { termination = "TIMEOUT"; summary = "任务执行超时"; break; }
+                    if (run.cancelled.getAsBoolean()) {
+                        termination = "CANCELLED";
+                        summary = "任务已取消";
+                        break;
+                    }
+                    if (System.nanoTime() >= deadline) {
+                        termination = "TIMEOUT";
+                        summary = "任务执行超时";
+                        break;
+                    }
                     calls++;
-                    var toolFuture = executor.submit(() -> registry.execute(call.name(), call.arguments(), call.id()));
+                    var toolFuture = executor.submit(() ->
+                        registry.execute(call.name(), call.arguments(), call.id())
+                    );
                     try {
                         String output;
-                        long toolDeadline = Math.min(deadline, System.nanoTime() + TimeUnit.SECONDS.toNanos(15));
+                        long toolDeadline = Math.min(
+                            deadline,
+                            System.nanoTime() + TimeUnit.SECONDS.toNanos(15)
+                        );
                         while (true) {
                             if (run.cancelled.getAsBoolean()) throw new CancellationException();
                             if (System.nanoTime() >= toolDeadline) throw new TimeoutException();
-                            try { output = toolFuture.get(100, TimeUnit.MILLISECONDS); break; }
-                            catch (TimeoutException ignored) { /* 工具也必须遵守取消和总时限 */ }
+                            try {
+                                output = toolFuture.get(100, TimeUnit.MILLISECONDS);
+                                break;
+                            } catch (TimeoutException ignored) {
+                                /* 工具也必须遵守取消和总时限 */
+                            }
                         }
                         responses.add(new ToolResponseMessage.ToolResponse(call.id(), call.name(), output));
                     } catch (CancellationException exception) {
-                        toolFuture.cancel(true); termination = "CANCELLED"; summary = "任务已取消"; break;
+                        toolFuture.cancel(true);
+                        termination = "CANCELLED";
+                        summary = "任务已取消";
+                        break;
                     } catch (TimeoutException exception) {
-                        toolFuture.cancel(true); termination = "TIMEOUT"; summary = "工具执行超时，请粘贴 JD 后重试"; break;
+                        toolFuture.cancel(true);
+                        termination = "TIMEOUT";
+                        summary = "工具执行超时，请粘贴 JD 后重试";
+                        break;
                     } catch (Exception exception) {
-                        toolFuture.cancel(true); termination = "TOOL_ERROR"; summary = "工具执行失败，请稍后重试"; break;
+                        toolFuture.cancel(true);
+                        termination = "TOOL_ERROR";
+                        summary = "工具执行失败，请稍后重试";
+                        break;
                     }
                 }
                 if (responses.size() != assistant.getToolCalls().size()) break;
                 messages.add(new ToolResponseMessage(responses)); // 结果交回模型，开始下一轮。
             }
-        } finally { executor.shutdownNow(); }
+        } finally {
+            executor.shutdownNow();
+        }
+        // 5. 组装应用报告：模型提供建议，证据、覆盖率和排序草稿取自工具执行状态。
         run.event("termination", termination, "", summary);
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("summary", summary); result.put("termination", termination); result.put("provider", provider.name());
+        result.put("summary", summary);
+        result.put("termination", termination);
+        result.put("provider", provider.name());
         result.put("analysisType", run.resumeOnly ? "RESUME_REVIEW" : "JOB_MATCH");
         result.put("modelErrorCode", modelErrorCode);
-        result.put("careerAdvice", CareerAdvice.read(provider instanceof DemoAiProvider
-                ? CareerAdvice.demo(run,json) : rawCareer, run));
+        result.put(
+            "careerAdvice",
+            CareerAdvice.read(
+                provider instanceof DemoAiProvider ? CareerAdvice.demo(run, json) : rawCareer,
+                run
+            )
+        );
         result.put("resumeReview", run.resumeReview);
-        result.put("demo", limits.demoMode()); result.put("agentTrace", run.trace); result.put("sources", run.sources);
-        result.put("searchStatus", run.searchStatus); result.put("interviewQuestions", questions);
-        result.put("analysisBasis", run.analysisBasis); result.put("selectedSourceId", run.selectedSourceId);
-        result.put("draftContent", run.draft); result.put("requiresReview", true); result.put("rewrites", List.of());
-        result.put("usage", Map.of("modelRounds", rounds, "toolCalls", calls, "reservedTokenUpperBound", reserved,
-                "reportedInputTokens", inputTokens, "reportedOutputTokens", outputTokens));
+        result.put("demo", limits.demoMode());
+        result.put("agentTrace", run.trace);
+        result.put("sources", run.sources);
+        result.put("searchStatus", run.searchStatus);
+        result.put("interviewQuestions", questions);
+        result.put("analysisBasis", run.analysisBasis);
+        result.put("selectedSourceId", run.selectedSourceId);
+        result.put("draftContent", run.draft);
+        result.put("requiresReview", true);
+        result.put("rewrites", List.of());
+        result.put(
+            "usage",
+            Map.of(
+                "modelRounds",
+                rounds,
+                "toolCalls",
+                calls,
+                "reservedTokenUpperBound",
+                reserved,
+                "reportedInputTokens",
+                inputTokens,
+                "reportedOutputTokens",
+                outputTokens
+            )
+        );
         var matched = run.matching;
         result.put("score", matched == null ? 0 : matched.coverage());
-        result.put("scoreMeaning", run.resumeOnly ? "简历本身体检，不计算岗位匹配分数。补充目标 JD 后可继续定向分析。" : "关键词文字覆盖率，不代表能力评分或录用概率");
+        result.put(
+            "scoreMeaning",
+            run.resumeOnly
+                ? "简历本身体检，不计算岗位匹配分数。补充目标 JD 后可继续定向分析。"
+                : "关键词文字覆盖率，不代表能力评分或录用概率"
+        );
         result.put("strengths", matched == null ? List.of() : matched.matchedKeywords());
         result.put("gaps", matched == null ? List.of() : matched.missingKeywords());
         result.put("keywords", matched == null ? List.of() : matched.keywords());
-        result.put("matching", matched == null ? Map.of() : Map.of("jobKeywords", matched.keywords(),
-                "matchedKeywords", matched.matchedKeywords(), "missingKeywords", matched.missingKeywords(), "coverage", matched.coverage()));
-        result.put("evidence", matched == null ? List.of() : matched.matchedKeywords().stream()
-                .map(keyword -> Map.of("keyword", keyword, "quote", run.resume.lines()
-                        .filter(line -> line.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT)))
-                        .findFirst().orElse(""))).toList());
+        result.put(
+            "matching",
+            matched == null
+                ? Map.of()
+                : Map.of(
+                      "jobKeywords",
+                      matched.keywords(),
+                      "matchedKeywords",
+                      matched.matchedKeywords(),
+                      "missingKeywords",
+                      matched.missingKeywords(),
+                      "coverage",
+                      matched.coverage()
+                  )
+        );
+        result.put(
+            "evidence",
+            matched == null
+                ? List.of()
+                : matched
+                      .matchedKeywords()
+                      .stream()
+                      .map(keyword ->
+                          Map.of(
+                              "keyword",
+                              keyword,
+                              "quote",
+                              run.resume
+                                  .lines()
+                                  .filter(line ->
+                                      line.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT))
+                                  )
+                                  .findFirst()
+                                  .orElse("")
+                          )
+                      )
+                      .toList()
+        );
         return result;
     }
-    public String providerName() { return provider.name(); }
-    private com.fasterxml.jackson.databind.JsonNode parseReport(String value) throws java.io.IOException {
-        String text=value.trim().replace("\r\n","\n");
-        // 部分兼容模型会用 Markdown 包裹 JSON。只移除完整围栏，不从任意文字里猜测或修复 JSON。
-        if(text.startsWith("```json\n") && text.endsWith("```")) text=text.substring(8,text.length()-3).trim();
-        else if(text.startsWith("```\n") && text.endsWith("```")) text=text.substring(4,text.length()-3).trim();
-        return json.reader().with(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(text);
+
+    public String providerName() {
+        return provider.name();
     }
+
+    private com.fasterxml.jackson.databind.JsonNode parseReport(String value) throws java.io.IOException {
+        String text = value.trim().replace("\r\n", "\n");
+        // 部分兼容模型会用 Markdown 包裹 JSON。只移除完整围栏，不从任意文字里猜测或修复 JSON。
+        if (text.startsWith("```json\n") && text.endsWith("```")) text = text
+            .substring(8, text.length() - 3)
+            .trim();
+        else if (text.startsWith("```\n") && text.endsWith("```")) text = text
+            .substring(4, text.length() - 3)
+            .trim();
+        return json
+            .reader()
+            .with(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .readTree(text);
+    }
+
     private String safeErrorCode(Throwable error) {
-        for (int i=0; error!=null && i<8; i++, error=error.getCause()) {
-            if (error instanceof org.springframework.web.client.RestClientResponseException response)
-                return "HTTP_" + response.getStatusCode().value();
-            var status=java.util.regex.Pattern.compile("^HTTP ([45][0-9]{2})\\b").matcher(String.valueOf(error.getMessage()));
-            if (status.find()) return "HTTP_"+status.group(1);
+        for (int i = 0; error != null && i < 8; i++, error = error.getCause()) {
+            if (error instanceof org.springframework.web.client.RestClientResponseException response) return "HTTP_" + response.getStatusCode().value();
+            var status = java.util.regex.Pattern.compile("^HTTP ([45][0-9]{2})\\b").matcher(
+                String.valueOf(error.getMessage())
+            );
+            if (status.find()) return "HTTP_" + status.group(1);
             if (error instanceof java.net.UnknownHostException) return "NETWORK_DNS";
             if (error instanceof java.net.ConnectException) return "NETWORK_CONNECTION";
         }

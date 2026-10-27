@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @EnableAsync
 @ConfigurationPropertiesScan
 public class ResumeFitBackendApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(ResumeFitBackendApplication.class, args);
     }

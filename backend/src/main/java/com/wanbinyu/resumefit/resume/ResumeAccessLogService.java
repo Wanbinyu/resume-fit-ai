@@ -3,11 +3,12 @@ package com.wanbinyu.resumefit.resume;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wanbinyu.resumefit.common.BusinessException;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 
+/** 记录简历或版本的访问事件并汇总次数；事件记录不保存访问者 IP 或简历正文。 */
 @Service
 public class ResumeAccessLogService {
+
     private final ResumeAccessLogMapper mapper;
     private final ResumeMapper resumeMapper;
 
@@ -38,13 +39,15 @@ public class ResumeAccessLogService {
     }
 
     public long countSince(LocalDateTime time) {
-        return mapper.selectCount(new LambdaQueryWrapper<ResumeAccessLogEntity>()
-                .ge(ResumeAccessLogEntity::getAccessedAt, time));
+        return mapper.selectCount(
+            new LambdaQueryWrapper<ResumeAccessLogEntity>().ge(ResumeAccessLogEntity::getAccessedAt, time)
+        );
     }
 
     public long countForVersion(Long versionId) {
-        return mapper.selectCount(new LambdaQueryWrapper<ResumeAccessLogEntity>()
-                .eq(ResumeAccessLogEntity::getVersionId, versionId));
+        return mapper.selectCount(
+            new LambdaQueryWrapper<ResumeAccessLogEntity>().eq(ResumeAccessLogEntity::getVersionId, versionId)
+        );
     }
 
     private String normalizeSource(String source) {

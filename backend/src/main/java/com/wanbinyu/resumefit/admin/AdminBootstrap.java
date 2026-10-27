@@ -7,13 +7,19 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+/** 按可选配置初始化管理员账号，密码使用哈希保存；启动过程不输出密码。 */
 @Component
 public class AdminBootstrap implements CommandLineRunner {
+
     private final AdminProperties properties;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
-    public AdminBootstrap(AdminProperties properties, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public AdminBootstrap(
+        AdminProperties properties,
+        UserMapper userMapper,
+        PasswordEncoder passwordEncoder
+    ) {
         this.properties = properties;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
@@ -22,8 +28,11 @@ public class AdminBootstrap implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (!properties.enabled()) return;
-        UserEntity user = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
-                .eq(UserEntity::getUsername, properties.bootstrapUsername()).last("LIMIT 1"));
+        UserEntity user = userMapper.selectOne(
+            new LambdaQueryWrapper<UserEntity>()
+                .eq(UserEntity::getUsername, properties.bootstrapUsername())
+                .last("LIMIT 1")
+        );
         if (user == null) {
             user = new UserEntity();
             user.setUsername(properties.bootstrapUsername());

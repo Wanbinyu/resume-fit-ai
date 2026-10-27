@@ -1,5 +1,7 @@
 # Resume Fit AI 项目整理说明
 
+代码阅读顺序、模块说明和常见修改位置见 [CODE-READING-GUIDE.md](CODE-READING-GUIDE.md)。
+
 ## 一、项目定位
 
 Resume Fit AI 是一个面向 Java 后端和 AI Agent 岗位的简历优化平台。用户输入简历和目标 JD 后，系统完成匹配分析、证据提取、版本管理、报告生成和公开分享；管理员可以查看匿名使用数据和 AI 运行指标。

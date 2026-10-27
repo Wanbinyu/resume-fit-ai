@@ -6,12 +6,13 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.List;
 
+/** 初始简历和文件解析接口；解析提取文字，创建接口负责持久化。 */
 @RestController
 @RequestMapping("/api/resumes")
 public class ResumeController {
+
     private final ResumeService resumeService;
 
     public ResumeController(ResumeService resumeService) {
@@ -24,8 +25,10 @@ public class ResumeController {
     }
 
     @PostMapping
-    public ApiResponse<ResumeDtos.View> create(Authentication authentication,
-                                               @Valid @RequestBody ResumeDtos.CreateRequest request) {
+    public ApiResponse<ResumeDtos.View> create(
+        Authentication authentication,
+        @Valid @RequestBody ResumeDtos.CreateRequest request
+    ) {
         return ApiResponse.ok(resumeService.create(CurrentUser.id(authentication), request));
     }
 

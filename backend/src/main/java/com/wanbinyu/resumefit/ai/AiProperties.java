@@ -2,12 +2,25 @@ package com.wanbinyu.resumefit.ai;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * Agent 执行配置，对应 application.yml 的 app.ai 配置段。
+ * tokenBudget 是应用估算的累计预留，供应商实际用量由模型响应单独记录。
+ */
 @ConfigurationProperties(prefix = "app.ai")
-public record AiProperties(boolean demoMode, int maxSteps, String model, int maxToolCalls,
-                           int timeoutSeconds, int callTimeoutSeconds, int tokenBudget, int maxOutputTokens) {
+public record AiProperties(
+    boolean demoMode,
+    int maxSteps,
+    String model,
+    int maxToolCalls,
+    int timeoutSeconds,
+    int callTimeoutSeconds,
+    int tokenBudget,
+    int maxOutputTokens
+) {
     public AiProperties(boolean demoMode, int maxSteps, String model) {
         this(demoMode, maxSteps, model, 12, 120, 35, 64000, 1800);
     }
+
     @org.springframework.boot.context.properties.bind.ConstructorBinding
     public AiProperties {
         maxSteps = Math.max(1, Math.min(maxSteps, 10));
@@ -18,6 +31,7 @@ public record AiProperties(boolean demoMode, int maxSteps, String model, int max
         tokenBudget = clamp(tokenBudget, 1000, 200000, 64000);
         maxOutputTokens = clamp(maxOutputTokens, 128, 4096, 1800);
     }
+
     private static int clamp(int value, int min, int max, int fallback) {
         return value == 0 ? fallback : Math.max(min, Math.min(value, max));
     }

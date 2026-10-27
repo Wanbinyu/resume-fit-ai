@@ -5,6 +5,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.tool.ToolCallback;
 import java.util.List;
 
+/** 单轮模型调用接口；真实模型和离线 Demo 使用同一个外层 Agent 循环。 */
 public interface AiProvider {
     String name();
 

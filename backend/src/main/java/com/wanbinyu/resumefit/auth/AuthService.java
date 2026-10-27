@@ -9,8 +9,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** 注册时保存密码哈希，登录时验证密码及启用状态，成功后生成包含用户 ID 和角色的 JWT。 */
 @Service
 public class AuthService {
+
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -27,7 +29,11 @@ public class AuthService {
         UserEntity user = new UserEntity();
         user.setUsername(request.username());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setDisplayName(request.displayName() == null || request.displayName().isBlank() ? request.username() : request.displayName());
+        user.setDisplayName(
+            request.displayName() == null || request.displayName().isBlank()
+                ? request.username()
+                : request.displayName()
+        );
         user.setRole("USER");
         user.setEnabled(true);
         userMapper.insert(user);
@@ -36,17 +42,29 @@ public class AuthService {
 
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         UserEntity user = findByUsername(request.username());
-        if (user == null || !Boolean.TRUE.equals(user.getEnabled()) || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (
+            user == null ||
+            !Boolean.TRUE.equals(user.getEnabled()) ||
+            !passwordEncoder.matches(request.password(), user.getPasswordHash())
+        ) {
             throw new BusinessException("用户名或密码错误");
         }
         return toResponse(user);
     }
 
     private UserEntity findByUsername(String username) {
-        return userMapper.selectOne(new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getUsername, username).last("LIMIT 1"));
+        return userMapper.selectOne(
+            new LambdaQueryWrapper<UserEntity>().eq(UserEntity::getUsername, username).last("LIMIT 1")
+        );
     }
 
     private AuthDtos.AuthResponse toResponse(UserEntity user) {
-        return new AuthDtos.AuthResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getRole(), jwtService.create(user.getId(), user.getRole()));
+        return new AuthDtos.AuthResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getDisplayName(),
+            user.getRole(),
+            jwtService.create(user.getId(), user.getRole())
+        );
     }
 }

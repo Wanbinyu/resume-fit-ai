@@ -5,12 +5,13 @@ import com.wanbinyu.resumefit.common.CurrentUser;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
+/** 岗位 JD 接口；使用当前用户身份调用 Service，模型不直接访问此控制器。 */
 @RestController
 @RequestMapping("/api/jobs")
 public class JobDescriptionController {
+
     private final JobDescriptionService service;
 
     public JobDescriptionController(JobDescriptionService service) {
@@ -18,7 +19,10 @@ public class JobDescriptionController {
     }
 
     @PostMapping
-    public ApiResponse<JobDtos.View> create(Authentication authentication, @Valid @RequestBody JobDtos.CreateRequest request) {
+    public ApiResponse<JobDtos.View> create(
+        Authentication authentication,
+        @Valid @RequestBody JobDtos.CreateRequest request
+    ) {
         return ApiResponse.ok(service.create(CurrentUser.id(authentication), request));
     }
 
