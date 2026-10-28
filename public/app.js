@@ -55,6 +55,7 @@ const historyList = document.querySelector("#historyList");
 const closeHistoryBtn = document.querySelector("#closeHistoryBtn");
 const clearHistoryBtn = document.querySelector("#clearHistoryBtn");
 const versionWorkspaceLink = document.querySelector("#versionWorkspaceLink");
+const careerAssistantLink = document.querySelector("#careerAssistantLink");
 
 if (versionWorkspaceLink) {
   fetch("/api/public-config")
@@ -62,6 +63,7 @@ if (versionWorkspaceLink) {
     .then((config) => {
       if (config?.backendUrl) {
         versionWorkspaceLink.href = `${config.backendUrl.replace(/\/$/, "")}/workspace.html`;
+        if (careerAssistantLink) careerAssistantLink.href = `${config.backendUrl.replace(/\/$/, "")}/job-assistant.html`;
       }
     })
     .catch(() => {

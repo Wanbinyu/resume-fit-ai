@@ -31,6 +31,8 @@ public class SecurityConfig {
                         "/index.html",
                         "/admin.html",
                         "/workspace.html",
+                        "/job-assistant.html",
+                        "/assets/**",
                         "/share.html",
                         "/api/health",
                         "/api/auth/**",

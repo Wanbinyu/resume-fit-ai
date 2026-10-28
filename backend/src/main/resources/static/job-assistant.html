@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Resume Fit AI · 我的求职</title>
+    <link rel="stylesheet" href="/assets/job-assistant/styles.css" />
+    <script type="module" src="/assets/job-assistant/app.js"></script>
+  </head>
+  <body>
+    <div id="authLayer" class="auth-layer" hidden>
+      <form id="authForm" class="auth-box">
+        <span class="eyebrow">RESUME FIT AI</span>
+        <h1 id="authTitle">登录我的求职</h1>
+        <p class="muted">与简历工作台使用同一个账号。</p>
+        <label id="displayNameLabel" hidden
+          >显示名称<input name="displayName" maxlength="80" autocomplete="name"
+        /></label>
+        <label
+          >用户名<input
+            name="username"
+            required
+            maxlength="80"
+            autocomplete="username"
+        /></label>
+        <label
+          >密码<input
+            name="password"
+            required
+            type="password"
+            minlength="8"
+            maxlength="128"
+            autocomplete="current-password"
+        /></label>
+        <p id="authMessage" class="message" role="status"></p>
+        <button type="submit" class="primary" id="authSubmit">登录</button>
+        <button type="button" id="authToggle">首次使用？注册账号</button>
+      </form>
+    </div>
+    <main class="shell" id="content">
+      <header class="page-header">
+        <div>
+          <a class="brand" href="/workspace.html"
+            ><span class="brand-mark">RF</span>Resume Fit AI</a
+          >
+          <h1>我的求职</h1>
+          <p class="muted">
+            简历体检、目标岗位、公司信息和求职进度，放在一起整理。
+          </p>
+        </div>
+        <nav aria-label="页面操作">
+          <a class="button" href="/workspace.html">简历与版本</a
+          ><button id="refresh">刷新数据</button
+          ><button id="logout">退出</button>
+        </nav>
+      </header>
+      <p id="pageMessage" class="message" role="status" aria-live="polite"></p>
+      <section class="stats" aria-label="求职概览" id="stats"></section>
+      <nav class="section-nav" aria-label="内容导航">
+        <a href="#assistant">求职分析</a><a href="#profile">求职偏好</a
+        ><a href="#jobs">收藏岗位</a><a href="#companies">公司档案</a
+        ><a href="#applications">投递跟进</a>
+      </nav>
+
+      <section class="card" id="assistant">
+        <div class="section-heading">
+          <div>
+            <span class="eyebrow">下一步做什么</span>
+            <h2>求职助手</h2>
+          </div>
+          <span id="agentMode" class="pill">检查服务中</span>
+        </div>
+        <p class="muted" id="capabilityHint">
+          选择已保存的简历版本，再决定要了解的内容。
+        </p>
+        <form id="assistantForm">
+          <div class="grid three">
+            <label
+              >简历<select name="resumeId" id="resumeSelect" required>
+                <option value="">请先在工作台导入简历</option>
+              </select></label
+            >
+            <label
+              >已保存的版本<select name="versionId" id="versionSelect">
+                <option value="">原始简历主记录</option>
+              </select></label
+            >
+            <label
+              >分析方向<select name="intent">
+                <option value="OVERVIEW">简历体检与求职总览</option>
+                <option value="MATCH">与收藏岗位对比</option>
+                <option value="COMPANY">整理公司信息与待核实问题</option>
+              </select></label
+            >
+            <label
+              >收藏岗位<select name="jobId" id="agentJobSelect">
+                <option value="">暂不指定</option>
+              </select></label
+            >
+            <label
+              >公司档案<select name="companyId" id="agentCompanySelect">
+                <option value="">暂不指定</option>
+              </select></label
+            >
+            <label
+              >期望岗位（可选）<input
+                name="targetRole"
+                maxlength="100"
+                placeholder="例如：AI 应用开发工程师"
+            /></label>
+          </div>
+          <div class="actions">
+            <button type="submit" id="startAgent" class="primary">
+              开始分析</button
+            ><button type="button" id="resumeAgent" hidden>
+              继续查看当前任务</button
+            ><button type="button" id="cancelAgent" disabled>取消任务</button
+            ><span class="muted small"
+              >分析使用保存的内容，生成结果后由你决定下一步。</span
+            >
+          </div>
+        </form>
+        <p
+          id="agentMessage"
+          class="message"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <div id="agentResult" class="result" hidden></div>
+      </section>
+
+      <details class="card" id="profile" open>
+        <summary>
+          <h2>求职偏好</h2>
+          <span class="muted small">让建议更贴近你的选择</span>
+        </summary>
+        <form id="profileForm">
+          <div class="grid two">
+            <label
+              >期望岗位<input
+                name="targetRoles"
+                maxlength="485"
+                placeholder="多个岗位用逗号分隔，最多 6 个"
+            /></label>
+            <label
+              >意向城市<input
+                name="preferredCities"
+                maxlength="330"
+                placeholder="可留空；多个城市用逗号分隔，最多 8 个"
+            /></label>
+            <label
+              >最低月薪（元）<input
+                name="salaryMin"
+                type="number"
+                min="0"
+                max="2000000"
+                step="1"
+                placeholder="未知可留空"
+            /></label>
+            <label
+              >最高月薪（元）<input
+                name="salaryMax"
+                type="number"
+                min="0"
+                max="2000000"
+                step="1"
+                placeholder="未知可留空"
+            /></label>
+            <label class="wide"
+              >看重的因素<input
+                name="priorities"
+                maxlength="330"
+                placeholder="例如：成长空间，工作时间，业务稳定；最多 8 项"
+            /></label>
+            <label class="wide"
+              >补充说明<textarea
+                name="notes"
+                maxlength="1000"
+                rows="2"
+                placeholder="可以写暂不考虑的方向、入职时间等"
+              ></textarea>
+            </label>
+          </div>
+          <label class="check"
+            ><input
+              name="remoteAccepted"
+              type="checkbox"
+            />可以考虑远程工作</label
+          >
+          <div class="actions">
+            <button type="submit" class="primary">保存偏好</button
+            ><button type="button" id="reloadProfile">重新载入已保存偏好</button
+            ><span id="profileMessage" class="message" role="status"></span>
+          </div>
+        </form>
+      </details>
+
+      <div class="columns">
+        <section class="card" id="jobs">
+          <div class="section-heading">
+            <h2>收藏岗位</h2>
+            <span class="muted small">保留原始要求与来源</span>
+          </div>
+          <p class="muted small">
+            填写你找到的真实岗位。招聘日期和来源有助于核实是否还在招聘。
+          </p>
+          <div id="jobList" class="record-list"></div>
+          <details class="editor">
+            <summary>＋ 收藏一个岗位</summary>
+            <form id="jobForm">
+              <label
+                >岗位名称<input name="title" required maxlength="160"
+              /></label>
+              <div class="grid two">
+                <label
+                  >公司名称<input
+                    name="companyName"
+                    required
+                    maxlength="160" /></label
+                ><label
+                  >关联公司档案<select name="companyId" id="jobCompanySelect">
+                    <option value="">不关联</option>
+                  </select></label
+                >
+              </div>
+              <label>工作地点<input name="location" maxlength="80" /></label>
+              <div class="grid two">
+                <label
+                  >最低月薪（元）<input
+                    name="salaryMin"
+                    type="number"
+                    min="0"
+                    max="2000000"
+                    step="1" /></label
+                ><label
+                  >最高月薪（元）<input
+                    name="salaryMax"
+                    type="number"
+                    min="0"
+                    max="2000000"
+                    step="1"
+                /></label>
+              </div>
+              <label
+                >完整岗位描述<textarea
+                  name="description"
+                  required
+                  maxlength="3000"
+                  rows="5"
+                ></textarea>
+              </label>
+              <label
+                >原始来源（可选）<input
+                  name="sourceUrl"
+                  type="url"
+                  maxlength="1000"
+                  placeholder="https://..."
+              /></label>
+              <div class="grid two">
+                <label>采集日期<input name="collectedAt" type="date" /></label
+                ><label
+                  >截止日期（可选）<input name="expiresAt" type="date"
+                /></label>
+              </div>
+              <div class="actions">
+                <button type="submit" class="primary">保存岗位</button
+                ><span id="jobMessage" class="message" role="status"></span>
+              </div>
+            </form>
+          </details>
+        </section>
+
+        <section class="card" id="companies">
+          <div class="section-heading">
+            <h2>公司档案</h2>
+            <span class="muted small">保留依据，帮助判断</span>
+          </div>
+          <p class="muted small">
+            事实、主观看法和待核实内容分别记录。来源不足时保留未知，不生成信誉分。
+          </p>
+          <div id="companyList" class="record-list"></div>
+          <details class="editor" id="companyEditor">
+            <summary id="companyEditorTitle">＋ 新建公司档案</summary>
+            <form id="companyForm">
+              <input type="hidden" name="id" /><input
+                type="hidden"
+                name="revision"
+                value="0"
+              />
+              <label
+                >公司名称<input name="name" required maxlength="160"
+              /></label>
+              <label>行业<input name="industry" maxlength="100" /></label>
+              <label
+                >官方网站（可选）<input
+                  name="website"
+                  type="url"
+                  maxlength="1000"
+                  placeholder="https://..."
+              /></label>
+              <div class="section-heading">
+                <h3>已收集的信息</h3>
+                <button id="addEvidence" type="button">＋ 添加信息</button>
+              </div>
+              <div id="evidenceRows"></div>
+              <div class="actions">
+                <button type="submit" class="primary">保存公司档案</button
+                ><button type="button" id="resetCompany">取消编辑</button>
+              </div>
+              <p id="companyMessage" class="message" role="status"></p>
+            </form>
+          </details>
+        </section>
+      </div>
+
+      <section class="card" id="applications">
+        <div class="section-heading">
+          <h2>投递跟进</h2>
+          <span class="muted small">从收藏到面试与结果</span>
+        </div>
+        <p class="muted small">
+          在收藏岗位中点击“加入跟进”开始记录。这里只保存你的进度，不会替你投递或联系公司。
+        </p>
+        <div id="applicationList" class="application-grid"></div>
+        <details class="editor" id="applicationEditor" hidden>
+          <summary>更新跟进记录</summary>
+          <form id="applicationForm">
+            <input name="id" type="hidden" /><input
+              name="revision"
+              type="hidden"
+            />
+            <p id="applicationTitle"></p>
+            <div class="grid two">
+              <label
+                >当前阶段<select name="stage" id="stageSelect"></select></label
+              ><label
+                >下一步计划时间（可选）<input
+                  name="nextActionAt"
+                  type="datetime-local"
+              /></label>
+            </div>
+            <label
+              >笔记<textarea name="notes" maxlength="2000" rows="3"></textarea>
+            </label>
+            <div class="actions">
+              <button type="submit" class="primary">保存跟进</button
+              ><button type="button" id="closeApplication">取消编辑</button
+              ><span
+                id="applicationMessage"
+                class="message"
+                role="status"
+              ></span>
+            </div>
+          </form>
+        </details>
+      </section>
+      <footer class="muted small">
+        每类列表最多显示最近 100
+        条记录。分析会保留所用版本和工具过程，请结合原文与来源核实建议。
+      </footer>
+    </main>
+  </body>
+</html>

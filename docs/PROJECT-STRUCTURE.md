@@ -1,7 +1,5 @@
 # Resume Fit AI 项目整理说明
 
-代码阅读顺序、模块说明和常见修改位置见 [CODE-READING-GUIDE.md](CODE-READING-GUIDE.md)。
-
 ## 一、项目定位
 
 Resume Fit AI 是一个面向 Java 后端和 AI Agent 岗位的简历优化平台。用户输入简历和目标 JD 后，系统完成匹配分析、证据提取、版本管理、报告生成和公开分享；管理员可以查看匿名使用数据和 AI 运行指标。
@@ -34,6 +32,9 @@ Resume Fit AI 是一个面向 Java 后端和 AI Agent 岗位的简历优化平�
 | `backend/src/main/java/.../job` | 岗位 JD |
 | `backend/src/main/java/.../analysis` | 异步分析任务和报告 |
 | `backend/src/main/java/.../ai` | Spring AI、Agent 工具链和用量记录 |
+| `backend/src/main/java/.../career` | 求职偏好、收藏岗位、公司证据、投递及只读助手工具 |
+| `backend/src/main/resources/static/assets/workspace` | 版本工作台独立样式与脚本 |
+| `backend/src/main/resources/static/assets/job-assistant` | 我的求职：API适配、状态控制、展示与样式 |
 | `backend/src/main/java/.../admin` | 管理后台接口和管理员初始化 |
 | `backend/src/main/resources/static/` | 后端公开首页、版本工作台、分享页、管理后台 |
 | `backend/src/main/resources/schema.sql` | H2/MySQL 兼容的初始化表结构 |
@@ -47,6 +48,7 @@ Resume Fit AI 是一个面向 Java 后端和 AI Agent 岗位的简历优化平�
 | 用户端 | `http://localhost:3000` | 原有简历优化流程 |
 | 后端公开首页 | `http://localhost:8080/` | 平台介绍和匿名使用数据 |
 | 版本工作台 | `http://localhost:8080/workspace.html` | 版本创建、JD 绑定、分析、对比、发布 |
+| 我的求职 | `http://localhost:8080/job-assistant.html` | 偏好、岗位、公司证据、跟进和工具 Agent 分析 |
 | 分享页 | `http://localhost:8080/share.html` | 查看已发布简历版本 |
 | 管理后台 | `http://localhost:8080/admin.html` | 运营指标、用户、任务和 Agent 轨迹 |
 | Swagger | `http://localhost:8080/swagger-ui.html` | 调试和查看 API |

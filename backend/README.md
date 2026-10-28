@@ -6,6 +6,8 @@ Spring Boot backend for the Resume Fit AI project. The first version is a modula
 
 工具注册、多轮 DeepSeek 调用、搜索配置和初学者讲解见 [`docs/AGENT-QUICKSTART.md`](../docs/AGENT-QUICKSTART.md)。
 
+2026-10-27 新增“我的求职”入口 `/job-assistant.html`，将求职偏好、岗位收藏、公司来源证据、跟进记录接入同一注册工具 Agent。结构、运行边界、接口和已有数据库迁移见 [`docs/CAREER-ASSISTANT-GUIDE.md`](../docs/CAREER-ASSISTANT-GUIDE.md)，实施与验收见 [`docs/CAREER-ASSISTANT-PLAN.md`](../docs/CAREER-ASSISTANT-PLAN.md)。
+
 ## Run locally
 
 Requirements: Java 21 and Maven 3.9+.
@@ -50,7 +52,7 @@ ADMIN_BOOTSTRAP_PASSWORD=change-me-now
 
 ## Main API
 
-工作台支持根据已保存版本生成纯文字中文 PDF，不调用语言模型。使用根目录 `启动Agent工作台.cmd` 启动；请通过 `RESUME_FONT_PATH` 配置支持中文的 TTF 字体，Windows 默认尝试黑体。无需 Python 或图片处理服务。部署与备份说明见 [`docs/AGENT-QUICKSTART.md`](../docs/AGENT-QUICKSTART.md)。
+工作台支持所选已保存版本的纯文字 A4 PDF 导出，正文来自保存版本。照片上传、去背景和 PDF 人像功能保持移除，不依赖 Python 人像服务。
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
@@ -71,7 +73,10 @@ ADMIN_BOOTSTRAP_PASSWORD=change-me-now
 - `GET /api/resumes/{resumeId}/versions/compare?from={fromId}&to={toId}`
 - `POST /api/resumes/{resumeId}/versions/{versionId}/publish`
 - `GET /api/resumes/{resumeId}/reports`
-- `GET /api/resumes/{resumeId}/versions/{versionId}/document?targetRole=`
+- `GET /api/resumes/photo-capabilities`
+- `GET/POST/DELETE /api/resumes/{resumeId}/photo`
+- `GET /api/resumes/{resumeId}/photo/{original|cutout}`
+- `GET /api/resumes/{resumeId}/versions/{versionId}/document?photo=true&background=white&targetRole=`
 
 ## Design notes
 

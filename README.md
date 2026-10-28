@@ -1,8 +1,10 @@
 # Resume Fit AI
 
-一个可直接部署到海外服务器的简历 JD 匹配优化器 MVP。
+一个可部署的简历分析与求职助手，支持简历版本、岗位 JD 对比、公司来源证据和投递跟进。
 
 当前项目已经扩展为“用户端 + Spring Boot 后端 + 简历版本工作台”的模块化单体，适合作为 Java 后端 / AI Agent 面试项目。项目结构、模块边界和分析链路见 [`docs/PROJECT-STRUCTURE.md`](./docs/PROJECT-STRUCTURE.md)。
+
+“我的求职”位于 `/job-assistant.html`：模型通过注册的只读工具整理本人求职资料，简历表达检查与岗位关键词覆盖率分开展示。公司资料保留来源、日期及事实/观点/待核实类型，不生成缺少依据的信誉分。运行方式与已实现边界见 [`docs/CAREER-ASSISTANT-GUIDE.md`](./docs/CAREER-ASSISTANT-GUIDE.md)。照片抠图保持移除，支持纯文字 PDF 导出。
 
 ## 本地运行
 
